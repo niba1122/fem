@@ -1,0 +1,16 @@
+old_files/
+
+*.docx
+*.xlsx
+*.db
+
+*.jpg
+*.png
+*.gif
+
+*.m
+
+*.exe
+*.inp
+
+*.dmp

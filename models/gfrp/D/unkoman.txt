@@ -1,0 +1,190 @@
++----------------------------------------------------+
+|  Welcome to VOXEL PREMAT                           |
+|  2011/04/18                                        |
+|  (C) Copyright Quint Corp.                         |
++----------------------------------------------------+
+
+ *** MICRO STRUCTURE FILE ***
+     C:\Users\takanolab\Desktop\unkoman.fem
+
+ *** CHARACTERISTIC FUNCUITON FILE ***
+     C:\Users\takanolab\Desktop\unkoman.cde
+
+ *** ADMISSIBLE ERROR ***
+       0.10000E-03
+
+ *** ANALYSIS STARTED ***
+     2014/10/08 21:36:15
+
+ *** VOXEL MODEL INFORMATION ***
+     ANALYSIS TYPE                        :   ELASTICITY
+     TOTAL NUMBER OF NODES                :      1028281
+     TOTAL NUMBER OF VOXELS               :       997800
+     TOTAL NUMBER OF MATERIAL PROPERTIES  :            2
+     VOXEL SIZE - VX                      :  0.10053E+00
+                - VY                      :  0.10000E+00
+                - VZ                      :  0.10053E+00
+     TOTAL NUMBER OF VOXELS OF X-DIRECTION:          100
+     TOTAL NUMBER OF VOXELS OF Y-DIRECTION:          100
+     TOTAL NUMBER OF VOXELS OF Z-DIRECTION:          100
+
+
+--- License System Configuration ---
+Environment Variable :
+  QUINT_LICENSE_FILE=@127.0.0.1
+  LM_LICENSE_FILE=
+Windows Registry Entry :
+  Key  : HKEY_LOCAL_MACHINE\SOFTWARE\FLEXlm License Manager  ... not found
+    Name : QUINT_LICENSE_FILE         ... not found
+      Type : REG_SZ(character string) ... not found
+      Data :                          ... not found
+    Name : LM_LICENSE_FILE         ... not found
+      Type : REG_SZ(character string) ... not found
+      Data :                          ... not found
+------------------------------------
+  Feature: VOX_SL
+  Version: 2011.00
+  Feature: VOX_SL_PAR
+  Version: 2011.00
+
+ *** INFORMATION OF PARALLEL PROCESSING ***
+     NUMBER OF THREADS :   4
+
+ *** INFORMATION OF ALLOCATED MEMORY ***
+     TOTAL REQUIRED MAIN MEMORY :      379(MB)
+
+
+ *** MATERIAL PROPERTIES ***
+     MATERIAL PROPERTY NUMBER             :            1
+     E1, E2, E3  :  0.75000E+02  0.75000E+02  0.75000E+02
+     V12,V23,V31 :  0.30000E+00  0.30000E+00  0.30000E+00
+     G12,G23,G31 :  0.28846E+02  0.28846E+02  0.28846E+02
+     A1, A2, A3  :  0.00000E+00  0.00000E+00  0.00000E+00
+     K1, K2, K3  :  0.00000E+00  0.00000E+00  0.00000E+00
+     MASS DENSITY:  0.00000E+00
+     PRIN. DIR. 1:  0.10000E+01  0.00000E+00  0.00000E+00
+     PRIN. DIR. 2:  0.00000E+00  0.10000E+01  0.00000E+00
+     PRIN. DIR. 3:  0.00000E+00  0.00000E+00  0.10000E+01
+     MATERIAL PROPERTY NUMBER             :            2
+     E1, E2, E3  :  0.30000E+01  0.30000E+01  0.30000E+01
+     V12,V23,V31 :  0.30000E+00  0.30000E+00  0.30000E+00
+     G12,G23,G31 :  0.11538E+01  0.11538E+01  0.11538E+01
+     A1, A2, A3  :  0.00000E+00  0.00000E+00  0.00000E+00
+     K1, K2, K3  :  0.00000E+00  0.00000E+00  0.00000E+00
+     MASS DENSITY:  0.00000E+00
+     PRIN. DIR. 1:  0.10000E+01  0.00000E+00  0.00000E+00
+     PRIN. DIR. 2:  0.00000E+00  0.10000E+01  0.00000E+00
+     PRIN. DIR. 3:  0.00000E+00  0.00000E+00  0.10000E+01
+
+ *** PERIODIC CONSTRAINTS ***
+     NUMBER OF PAIR NODES =   28381
+
+ *** NODES WITH NO SLAVE NODES ***
+     NUMBER OF NODES ON SURFACE          =    57982
+     NUMBER OF NODES WITH NO CONSTRAINT  =     1584
+     RATIO OF NODES WITH CONSTRAINT  =     97.27(%)
+
+ *** LOAD CASE =  1/ 6 ***
+     INFORMATION OF CONVERGENCE( C-G  SOLVER )
+     ITERATION # =      100, R-NORM =  0.326E-01
+     ITERATION # =      200, R-NORM =  0.102E-03
+     ITERATION # =      201, R-NORM =  0.956E-04 ! CONVERGED !
+
+ *** LOAD CASE =  2/ 6 ***
+     INFORMATION OF CONVERGENCE( C-G  SOLVER )
+     ITERATION # =      100, R-NORM =  0.142E-01
+     ITERATION # =      188, R-NORM =  0.935E-04 ! CONVERGED !
+
+ *** LOAD CASE =  3/ 6 ***
+     INFORMATION OF CONVERGENCE( C-G  SOLVER )
+     ITERATION # =      100, R-NORM =  0.206E-01
+     ITERATION # =      192, R-NORM =  0.995E-04 ! CONVERGED !
+
+ *** LOAD CASE =  4/ 6 ***
+     INFORMATION OF CONVERGENCE( C-G  SOLVER )
+     ITERATION # =      100, R-NORM =  0.602E-03
+     ITERATION # =      133, R-NORM =  0.952E-04 ! CONVERGED !
+
+ *** LOAD CASE =  5/ 6 ***
+     INFORMATION OF CONVERGENCE( C-G  SOLVER )
+     ITERATION # =      100, R-NORM =  0.141E-01
+     ITERATION # =      188, R-NORM =  0.909E-04 ! CONVERGED !
+
+ *** LOAD CASE =  6/ 6 ***
+     INFORMATION OF CONVERGENCE( C-G  SOLVER )
+     ITERATION # =      100, R-NORM =  0.321E-01
+     ITERATION # =      200, R-NORM =  0.999E-04
+     ITERATION # =      200, R-NORM =  0.999E-04 ! CONVERGED !
+ 
+=================================S U M M A R Y=================================
+
+
+ *** HOMOGENIZED ELASTICITY MATRIX ***
+             1111        1122        1133        1112        1123        1131
+                         2222        2233        2212        2223        2231
+                                     3333        3312        3323        3331
+                                                 1212        1223        1231
+                                                             2323        2331
+                                                                         3131
+       0.1005E+02  0.3843E+01  0.2763E+01  0.1341E-06 -0.8021E-08  0.2425E-02
+                   0.4124E+02  0.3844E+01  0.4882E-07 -0.2814E-07 -0.3039E-04
+                               0.1005E+02  0.2865E-07 -0.8576E-07 -0.2527E-02
+                                           0.3182E+01 -0.3671E-07  0.2437E-07
+                                                       0.3183E+01  0.1126E-12
+                                                                   0.2326E+01
+ *** THERMAL EXPANSION COEFF. ***
+      0.00000E+00  0.00000E+00  0.00000E+00  0.00000E+00  0.00000E+00  0.00000E+00
+ *** NASTRAN BULK FORMAT (MAT9) ***
+MAT9           110.047363.8430492.7627011.341E-7-8.02E-90.00242541.24194
+        3.8441474.882E-8-2.81E-8-3.04E-510.051122.865E-8-8.58E-8-0.00253
+        3.181584-3.67E-82.437E-83.1829511.13E-132.3259560.0000000.000000
+        0.0000000.0000000.0000000.0000000.0000000.0000000.000000
+ *** HOMOGENIZED COMPLIANCE MATRIX ***
+       0.1100E+00 -0.7705E-02 -0.2728E-01 -0.4270E-08 -0.5261E-09 -0.1444E-03
+                   0.2568E-01 -0.7705E-02  0.3454E-14  0.4256E-15  0.1168E-09
+                               0.1099E+00  0.2769E-09  0.2825E-08  0.1478E-03
+                                           0.3143E+00  0.3625E-08 -0.3288E-08
+                                                       0.3142E+00  0.3602E-11
+                                                                   0.4299E+00
+ *** EQUIVALENT ENGINEERING CONSTANTS ***
+     YOUNG'S MODULI (E11,E22,E33) =  0.90928E+01  0.38936E+02  0.90961E+01
+     POISSON'S RATIO(V12,V23,V31) =  0.70061E-01  0.30000E+00  0.24816E+00
+     SHEAR MODULI   (G12,G23,G31) =  0.31816E+01  0.31830E+01  0.23260E+01
+ *** ANSYS MP COMMAND ***
+/COM ANSYS MP command written by VOXELCON
+EX, 1, 0.90928E+01
+GXY, 1, 0.31816E+01
+PRXY, 1, 0.70061E-01
+ALPX, 1, 0.00000E+00
+EY, 1, 0.38936E+02
+EZ, 1, 0.90961E+01
+GYZ, 1, 0.31830E+01
+GXZ, 1, 0.23260E+01
+PRYZ, 1, 0.30000E+00
+PRXZ, 1, 0.24807E+00
+ALPY, 1, 0.00000E+00
+ALPZ, 1, 0.00000E+00
+ *** HOMOGENIZED ELASTICITY MATRIX ***
+       0.1005E+02  0.3843E+01  0.2763E+01  0.0000E+00  0.0000E+00  0.0000E+00
+                   0.4124E+02  0.3844E+01  0.0000E+00  0.0000E+00  0.0000E+00
+                               0.1005E+02  0.0000E+00  0.0000E+00  0.0000E+00
+                                           0.3182E+01  0.0000E+00  0.0000E+00
+                                                       0.3183E+01  0.0000E+00
+                                                                   0.2326E+01
+ *** HOMOGENIZED COMPLIANCE MATRIX ***
+       0.1100E+00 -0.7705E-02 -0.2728E-01  0.0000E+00  0.0000E+00  0.0000E+00
+                   0.2568E-01 -0.7705E-02  0.0000E+00  0.0000E+00  0.0000E+00
+                               0.1099E+00  0.0000E+00  0.0000E+00  0.0000E+00
+                                           0.3143E+00  0.0000E+00  0.0000E+00
+                                                       0.3142E+00  0.0000E+00
+                                                                   0.4299E+00
+ *** EQUIVALENT ENGINEERING CONSTANTS ***
+     YOUNG'S MODULI (E11,E22,E33) =  0.90928E+01  0.38936E+02  0.90961E+01
+     POISSON'S RATIO(V12,V23,V31) =  0.70061E-01  0.30000E+00  0.24816E+00
+     SHEAR MODULI   (G12,G23,G31) =  0.31816E+01  0.31830E+01  0.23260E+01
+
+ *** ANALYSIS FINISHED ***
+     2014/10/08 21:39:34
+ *** ELAPSED TIME ***
+     CPU TIME =   0h10m39s                                                      
+ *** VOXPRE NORMAL END ***

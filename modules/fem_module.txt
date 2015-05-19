@@ -1,0 +1,153 @@
+﻿subroutine error(msg)
+	character(*) msg
+
+subroutine read_model(model,name_mdl)
+	type(struct_model) model
+	character(16) name_mdl
+
+subroutine set_state2d(model,state2d,thickness)
+	type(struct_model) model
+	integer state2d
+	double precision thickness
+
+subroutine init_addition_matrix_sln(k,index_k_diag,model)
+	double precision,allocatable k(:) (未割り付け)
+	integer,allocatable index_k_diag(:) (未割り付け)
+	type(struct_model) model
+
+subroutine calc_element_integral(I,model,i_el,func,data)
+	double precision I(:,:) (割り付け済)
+	type(struct_model) model
+	integer i_el
+	type(struct_data),optional data(:) (割り付け済)
+
+    function func(model,i_el,coord)
+		type(struct_model) model
+		integer i_el
+		double precision coord(:) (割り付け済)
+		type(struct_data),optional data(:) (割り付け済)
+		double precision,allocatable func(:,:) (割り付け後に返す)
+    end function
+    ※Iとfuncのサイズを必ず同じにする
+
+subroutine calc_detJ(detJ,model,i_el,coord)
+	double precision detJ
+	type(struct_model) model
+	integer i_el
+	double precision coord(:) (割り付け済)
+
+subroutine calc_K_sln(k,model,index_k_diag)
+	type(struct_model) model
+	double precision k(:)
+	integer index_k_diag(:)
+
+subroutine calc_addition_matrix_sln(k,model,index_k_diag,func,D)
+	double precision k(:) (割り付け済)
+	type(struct_model) model
+	integer index_k_diag(:) (割り付け済)
+	double precision,pointer,optional :: D(:,:,:)
+	function func(model,i_el,coord)
+		type(struct_model) model
+		integer i_el
+		double precision coord(:) (割り付け済)
+		type(struct_data),optional :: data(:) (割り付け済)
+		double precision,allocatable,func(:,:) (割り付け後に返す)
+    end function
+
+function calc_BDB(model,i_el,coord,data)
+	type(struct_model) model
+	integer i_el
+	double precision coord(:) (割り付け済)
+	type(struct_model),optional data(:) (割り付け済)　※dataは処理自体には用いられない。ただし、構造体配列の割付を予めして渡すこと
+	double precision calc_BDB(:,:)
+
+subroutine calc_B(B,model,i_el,coord) 
+	double precision,allocatable B(:,:) (未割り付け)
+	type(struct_model) model
+	integer i_el
+	double precision coord(:) (割り付け済)
+
+subroutine calc_Jinv(Jinv,model,i_el,coord,dN_dxi)
+	double precision,allocatable Jinv(:,:) (未割り付け)
+	type(struct_model) model
+	integer i_el
+	double precision coord(:) (割り付け済)
+	double precision dN_dxi(:,:)　(割り付け済)
+
+subroutine calc_D(D,model,D_)
+	double precision,allocatable D(:,:) (出力、未割り付け)
+	type(struct_model) model
+	double precision D_(:,:) (入力、割り付け済)
+
+subroutine read_f(f,model)
+	double precision,allocatable f(:) (未割り付け)
+	type(struct_model) model
+
+subroutine read_cc(bc,model)
+	type(struct_bc) :: bc
+	type(struct_model) :: model
+
+subroutine set_cc(k,f,model,bc,index_k_diag)
+	double precision k(:) (割り付け済)
+	double precision f(:) (割り付け済)
+	type(struct_model) model
+	type(struct_bc) bc
+	integer index_k_diag(:) (割り付け済)
+
+subroutine set_constrained_u(u,model,bc)
+	double precision u(:) (割り付け済)
+	type(struct_model) model
+	type(struct_bc) bc
+
+subroutine calc_output(output,model,u)
+	type(struct_output) output
+	type(struct_model) model
+	double precision u(:) (割り付け済)
+
+subroutine output_inp(model,output,file_name)
+	type(struct_model) model
+	type(struct_output) output
+	character(*) file_name
+
+subroutine calc_sig(output,model,i_el,D_)
+	type(struct_output) output
+	type(struct_model) model
+	integer i_el
+	double precision D_(:,:)
+
+subroutine make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name)
+	double precision nd_data(:,:) (割り付け済) (パラメータ数,節点数)
+	double precision el_data(:,:) (割り付け済) (パラメータ数,要素数)
+	character(16) nd_data_name(:) (割り付け済) (パラメータ数)
+	character(16) el_data_name(:) (割り付け済) (パラメータ数)
+
+subroutine visualize_u(model,u)
+	type(struct_model) model
+	double precision u(:) (割り付け済)
+
+function Nh8(xi)
+	double precision xi(:) (割り付け済,サイズは必ず3)
+	double precision Nh8(3,8)
+
+
+function Nq4(xi)
+	double precision xi(:) (割り付け済,サイズは必ず2)
+	double precision Nh8(2,4)
+
+function sl_LDL(K,f,index_k_diag)
+	double precision K(:) (割り付け済)
+	double precision f(:) (割り付け済)
+	integer index_k_diag(:) (割り付け済)
+	double precision sl_LDL(:)
+
+function culc_LDL(L,D,f,index_k_diag)
+	double precision L(:)
+	double precision D(:)
+	double precision f(:)
+	index index_k_diag(:)
+	double precision culc_LDL(:)
+
+function inv_jordan(A)
+	double precision A(:,:)
+	double precision inv_jordan(:,:) (Aと同じサイズ)
+
