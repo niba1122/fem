@@ -3,6 +3,8 @@ old_files/
 *.docx
 *.xlsx
 *.db
+*.exe
+*.inp
 
 *.jpg
 *.png
@@ -10,11 +12,11 @@ old_files/
 
 *.m
 
-*.exe
-*.inp
-
 *.dmp
-
 *.mod
-
 *.out
+
+.DS_Store
+
+!bin/fem.out
+!bin/fem.exe
