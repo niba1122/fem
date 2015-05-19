@@ -17,6 +17,7 @@ old_files/
 *.out
 
 .DS_Store
+*.swp
 
 !bin/fem.out
 !bin/fem.exe
