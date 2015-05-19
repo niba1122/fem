@@ -14,3 +14,7 @@ old_files/
 *.inp
 
 *.dmp
+
+*.mod
+
+*.out
