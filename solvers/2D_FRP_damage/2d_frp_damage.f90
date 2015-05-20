@@ -16,6 +16,7 @@ program fem
   real(8),allocatable,target :: angle(:)
   real(8),allocatable,target :: damage_tensor(:,:)
   real(8) u_, du ! 損傷進展解析の変位、変位増分
+  real(8) :: max_sig(6,4) ! 損傷の閾値
   integer,allocatable,dimension(:) :: index_k_diag
   double precision thickness
 
@@ -38,7 +39,7 @@ program fem
 
   du = 1d-5
   model_no = 1
-  max_step = 1
+  max_step = 20
 
 
 !-------------------------------------------------------------------------------------------------------
@@ -63,6 +64,17 @@ print *,"mkdir "//trim(path_model)//slash//trim(model%name)
   shift(3) = uniform_rand_integer(0,53)
   shift(4) = uniform_rand_integer(0,53)
 
+  max_sig = 1d30
+
+! 材料2の強度
+  max_sig(1,2) = 1000.3*1d6
+  max_sig(2,2) = 34.3*1d6
+  max_sig(6,2) = 40.2*1d6
+! 材料3の強度
+  max_sig(1,3) = 34.3*1d6
+  max_sig(2,3) = 34.3*1d6
+  max_sig(6,3) = 40.2*1d6
+
 
   call generate_FRP_Model(model,shift)
 
@@ -84,6 +96,7 @@ print *,"mkdir "//trim(path_model)//slash//trim(model%name)
     f = 0d0
 
     u_ = du*step
+print *,u_
     call frp_set_tensile_bc(bc,model,u_)
 
      print *,"Calculating K matrix..."; print *
@@ -106,7 +119,7 @@ print *,"mkdir "//trim(path_model)//slash//trim(model%name)
 
      print *,"Judging the damage state..."; print *
 
-     call damage_judgment(model,output)
+     call damage_judgment(model,output,max_sig)
 
 !     call visualize_u(model,u)
 
@@ -150,12 +163,12 @@ print *,"mkdir "//trim(path_model)//slash//trim(model%name)
 contains
 
 
-subroutine damage_judgment(model,output)
+subroutine damage_judgment(model,output,max_sig)
   type(struct_model) :: model
   type(struct_output) :: output
   integer n_els,i
   real(8),pointer :: sig(:,:),angle(:),damage_tensor(:,:)
-  real(8) :: max_sig(6),sig_rot(6)
+  real(8) :: max_sig(:,:),sig_rot(6)
 
   n_els = model%n_els
   angle => model%data(1)%d(:,1,1)
@@ -163,34 +176,32 @@ subroutine damage_judgment(model,output)
 
   damage_tensor => model%data(2)%d(:,:,1)
 
+!   max_sig = 0d0
 
-  max_sig = 0d0
-
-  max_sig(1) = 1000.3*1d6
-  max_sig(2) = 34.3*1d6
-  max_sig(3) = 34.3*1d6
-  max_sig(4) = 40.2*1d6
-  max_sig(5) = 40.2*1d6
-  max_sig(6) = 40.2*1d6
-
+!   max_sig(1) = 1000.3*1d6
+!   max_sig(2) = 34.3*1d6
+!   max_sig(3) = 34.3*1d6
+!   max_sig(4) = 40.2*1d6
+!   max_sig(5) = 40.2*1d6
+!   max_sig(6) = 40.2*1d6
 
   do i=1,n_els
     sig_rot = rot_sig(sig(:,i),angle(i))
 
     if (model%material_nos(i) == 2) then ! x:L y:T z:Z
-      if (max_sig(1) < sig_rot(1)) then
+      if (max_sig(1,2) < sig_rot(1)) then
         damage_tensor(1,i) = 0.999d0
-      else if (max_sig(2) < sig_rot(2)) then
+      else if (max_sig(2,2) < sig_rot(2)) then
         damage_tensor(2,i) = 0.999d0
-      else if (max_sig(6) < sig_rot(6)) then
+      else if (max_sig(6,2) < sig_rot(6)) then
         damage_tensor(2,i) = 0.999d0
       end if
     else if (model%material_nos(i) == 3) then ! x:T y:Z z:L
-      if (max_sig(1) < sig_rot(2)) then
+      if (max_sig(1,3) < sig_rot(1)) then
         damage_tensor(1,i) = 0.999d0
-      else if (max_sig(2) < sig_rot(3)) then
+      else if (max_sig(2,3) < sig_rot(2)) then
         damage_tensor(2,i) = 0.999d0
-      else if (max_sig(6) < sig_rot(6)) then
+      else if (max_sig(6,3) < sig_rot(6)) then
         damage_tensor(1,i) = 0.999d0
         damage_tensor(2,i) = 0.999d0
       end if
