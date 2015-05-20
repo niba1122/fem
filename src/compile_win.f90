@@ -10,21 +10,24 @@ program fem
   character(256) :: command
   character(32) :: tmp
   character(64) :: file_path
-  character(:),allocatable :: solver_name
+!  character(:),allocatable :: solver_name
+  character(32) :: solver_name
   intrinsic :: command_argument_count, get_command_argument
 
   if (command_argument_count() > 0) then
     call get_command_argument(1, length=length, status=status)
 
-    allocate(character(length) :: solver_name)
+!    allocate(character(length) :: solver_name)
     call get_command_argument(1, solver_name, status=status)
+
+print *,solver_name
 
     open(10,file="./solvers/"//trim(solver_name)//"/sources.dat",status='old', iostat=iostat)
     if (iostat /= 0) call error("Cannot read solvers/"//solver_name//"/sources.dat")
     read (10,*,iostat=iostat) file_num
     if (iostat /= 0) call error("sources.dat is badly formated")
 
-    command = "gfortran -o .\solvers\"//solver_name//"\"//solver_name//".exe .\config\config_win.f90" 
+    command = "gfortran -o .\solvers\"//trim(solver_name)//"\"//trim(solver_name)//".exe .\config\config_win.f90" 
     do i=1,file_num
       read (10,*,iostat=iostat) tmp
       if (iostat /= 0) call error("sources.dat is badly formated")
@@ -33,7 +36,7 @@ program fem
       if (keyword_pos>0) then
         file_path = ".\modules\"//trim(tmp(keyword_pos+7:32))//".f90"
       else
-        file_path = ".\solvers\"//solver_name//"\"//tmp
+        file_path = ".\solvers\"//trim(solver_name)//"\"//tmp
       end if
 
       command = trim(command)//" "//trim(file_path)
