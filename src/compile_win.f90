@@ -24,7 +24,7 @@ program fem
     read (10,*,iostat=iostat) file_num
     if (iostat /= 0) call error("sources.dat is badly formated")
 
-    command = "gfortran -o .\solvers\"//solver_name//"\"//solver_name//".out .\config\config_win.f90" 
+    command = "gfortran -o .\solvers\"//solver_name//"\"//solver_name//".exe .\config\config_win.f90" 
     do i=1,file_num
       read (10,*,iostat=iostat) tmp
       if (iostat /= 0) call error("sources.dat is badly formated")
