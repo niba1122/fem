@@ -20,7 +20,6 @@ program fem
     call get_command_argument(1, solver_name, status=status)
 
     open(10,file="./solvers/"//trim(solver_name)//"/sources.dat",status='old', iostat=iostat)
-print *,"../solvers/"//trim(solver_name)//"/sources.dat"
     if (iostat /= 0) call error("Cannot read solvers/"//solver_name//"/sources.dat")
     read (10,*,iostat=iostat) file_num
     if (iostat /= 0) call error("sources.dat is badly formated")
