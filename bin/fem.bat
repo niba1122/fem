@@ -13,6 +13,5 @@ if "%command%" == "compile" (
 ) else if "%command%" == "exec" (
   cd %current_dir%
   cd ..\solvers\%solver%\
-pwd
   call ".\%solver%.exe"
 )
