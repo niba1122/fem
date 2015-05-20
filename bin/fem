@@ -1,0 +1,17 @@
+#!/bin/sh
+
+current_dir=`dirname $0`
+command=$1
+solver=$2
+
+if [ "${command}" = "compile" ]; then
+  cd `dirname $0`
+  cd "../"
+  exec "./bin/compile.out" $solver
+pwd
+elif [ "${command}" = "exec" ]; then
+  cd `dirname $0`
+  cd ../solvers/${solver}/
+pwd
+  exec "./${solver}.out"
+fi

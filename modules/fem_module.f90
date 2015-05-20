@@ -1,9 +1,10 @@
 module fem_module
+  use config
+
 	implicit none
-	character(1) :: slash = "\"
-	character(32) :: path_model = "..\..\models\" ! 最後にスラッシュを必ずつける
-	double precision :: pi = dacos(-1d0)
-!use config
+!	character(1) :: slash = "\"
+!	character(32) :: path_model = "..\..\models\" ! 最後にスラッシュを必ずつける
+!	double precision :: pi = dacos(-1d0)
 
 	type struct_model
 		character type_el*16
@@ -1558,7 +1559,7 @@ subroutine make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name)
 		type_el_inp = "hex"
 	end if
 
-	open(10, file=trim(path_model)//trim(model%name)//'/'//trim(file_name)//'.inp')
+	open(10, file=trim(path_model)//trim(model%name)//slash//trim(file_name)//'.inp')
 
 	write (10,*) '1'
 	write (10,*) 'geom'
