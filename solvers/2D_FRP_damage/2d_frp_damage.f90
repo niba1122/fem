@@ -21,6 +21,7 @@ program fem
   logical damaged
   real(8) sum_f ! 反力の合計
   real(8) :: max_sig(6,4) ! 損傷の閾値
+  real(8) :: vf !繊維束の体積含有率
   integer,allocatable,dimension(:) :: index_k_diag
   double precision thickness
 
@@ -43,7 +44,7 @@ program fem
 
   du = 1d-5
   model_no = 1
-  max_step = 20
+  max_step = 10
 
 
 !-------------------------------------------------------------------------------------------------------
@@ -52,9 +53,13 @@ program fem
 
 
   model%name = "gfrp_damage"
-  write(command,'(a)') "mkdir "//trim(path_model)//slash//trim(model%name)
-print *,"mkdir "//trim(path_model)//slash//trim(model%name)
+  write(command,'(a)') "mkdir "//trim(path_model)//trim(model%name)
+print *,"mkdir "//trim(path_model)//trim(model%name)
   call system(command)
+
+
+  open(11, file=trim(path_model)//trim(model%name)//slash//'models.csv')
+        write(11,*) 'model_no, vf, stress2L, stress2T, stress2TL, stress3T, stress3Z, stress3TZ, step'
 
   do i=1,model_no
   write(i_char, '(i0)') i
@@ -69,16 +74,20 @@ print *,"mkdir "//trim(path_model)//slash//trim(model%name)
   shift(3) = uniform_rand_integer(0,53)
   shift(4) = uniform_rand_integer(0,53)
 
-  max_sig = 1d30
+  vf = 0.6d0+normal_rand_real8(0.033d0)
+  print *,'vf = ',vf
+  call calc_strength(max_sig,vf)
 
-! 材料2の強度
-  max_sig(1,2) = 1000.3*1d6
-  max_sig(2,2) = 34.3*1d6
-  max_sig(6,2) = 40.2*1d6
-! 材料3の強度
-  max_sig(1,3) = 34.3*1d6
-  max_sig(2,3) = 34.3*1d6
-  max_sig(6,3) = 40.2*1d6
+!  max_sig = 1d30
+!
+!! 材料2の強度
+!  max_sig(1,2) = 1000.3*1d6
+!  max_sig(2,2) = 34.3*1d6
+!  max_sig(6,2) = 40.2*1d6
+!! 材料3の強度
+!  max_sig(1,3) = 34.3*1d6
+!  max_sig(2,3) = 34.3*1d6
+!  max_sig(6,3) = 40.2*1d6
 
 
   call generate_FRP_Model(model,shift)
@@ -122,7 +131,7 @@ print *,u_
 
     u = sl_LDL(K,f,index_k_diag)
 
-call calc_reaction_force(sum_f,model,u)
+    call calc_reaction_force(sum_f,model,u)
 
     call set_constrained_u(u,model,bc)
 
@@ -138,6 +147,8 @@ print *,'already damaged'
     else
       damaged = damage_judgment(model,output,max_sig)
       if (damaged) then
+        write(11,'(i0,7(",",d30.15),",",i0)') &
+          &model, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3), step
 print *, 'damaged!!! step',step
       else
         print *,'undamaged'
@@ -165,6 +176,7 @@ print *, 'damaged!!! step',step
 
   end do
 
+  close(11)
 
   print *,"Calculation was completed successfully!"; print *
 
@@ -185,6 +197,23 @@ print *, 'damaged!!! step',step
   read *
 
 contains
+
+subroutine calc_strength(max_sig,vf)
+  real(8) :: vf, max_sig(:,:)
+  
+
+  max_sig = 1d30
+
+! 材料2の強度
+  max_sig(1,2) = 1000.3d6+(vf-0.6d0)*100d6
+  max_sig(2,2) = 34.3d6+(vf-0.6d0)*(-18.5d6)
+  max_sig(6,2) = 40.2d6+(vf-0.6d0)*(-21.8d6)
+! 材料3の強度
+  max_sig(1,3) = 34.3d6+(vf-0.6d0)*(-18.5d6)
+  max_sig(2,3) = 34.3*1d6+(vf-0.6d0)*(-18.5d6)
+  max_sig(6,3) = 40.2*1d6+(vf-0.6d0)*(-21.8d6)
+
+end subroutine
 
 subroutine calc_reaction_force(sum_f,model,u)
   type(struct_model) :: model
@@ -326,7 +355,6 @@ subroutine frp_set_tensile_bc(bc,model,ux) ! 生成した2周期4層のFRPモデ
   dim = model%dim
 
   vertical_center = n_left_nodes/2
-print *,n_left_nodes,vertical_center
 
   n_spc = n_left_nodes+n_right_nodes
 
