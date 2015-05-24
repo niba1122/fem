@@ -1210,7 +1210,7 @@ subroutine set_cc(k,f,model,bc,sln)
 					f(q) = f(q) - K(sln(n)+q-n)*cnval(l,i)
 				end if
 			end do
-			f(n) = - K(sln(n))*cnval(l,i)
+			f(n) = f(n) - K(sln(n))*cnval(l,i)
 			do q=n+1,nn*dim
 				if ((sln(q)+n-q)>sln(q-1)) then
 					f(q) = f(q) - K(sln(q)+n-q)*cnval(l,i)

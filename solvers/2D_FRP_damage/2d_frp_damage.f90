@@ -12,10 +12,14 @@ program fem
   use FRPGenerate_module
   implicit none
   integer i,step,max_step,model_no
+  character(8) :: i_char,step_char
   double precision,allocatable,dimension(:) :: k,u,f
   real(8),allocatable,target :: angle(:)
   real(8),allocatable,target :: damage_tensor(:,:)
   real(8) u_, du ! 損傷進展解析の変位、変位増分
+  integer damaged_step
+  logical damaged
+  real(8) sum_f ! 反力の合計
   real(8) :: max_sig(6,4) ! 損傷の閾値
   integer,allocatable,dimension(:) :: index_k_diag
   double precision thickness
@@ -53,6 +57,7 @@ print *,"mkdir "//trim(path_model)//slash//trim(model%name)
   call system(command)
 
   do i=1,model_no
+  write(i_char, '(i0)') i
 
   write(*,'(a)') " ------------------------------"
   write(*,'(a,i0,a)') "  calculation of model ",i," start"
@@ -88,7 +93,13 @@ print *,"mkdir "//trim(path_model)//slash//trim(model%name)
 
   call system(command)
 
+  ! モデルごとのデータ出力
+  open(10, file=trim(path_model)//trim(model%name)//slash//trim(od_data_path)//'model'//trim(i_char)//'.csv')
+  damaged = .false.
+
   do step=1,max_step
+    write(step_char, '(i0)') step
+
     if (.not. allocated(f)) allocate(f(model%dim*model%n_nds))
     if (.not. allocated(u)) allocate(u(model%n_nds*model%dim))
 
@@ -109,40 +120,53 @@ print *,u_
     call set_cc(k,f,model,bc,index_k_diag)
 
 
-     u = sl_LDL(K,f,index_k_diag)
+    u = sl_LDL(K,f,index_k_diag)
 
-     call set_constrained_u(u,model,bc)
+call calc_reaction_force(sum_f,model,u)
 
-     print *,"Calculating stress and strain..."; print *
+    call set_constrained_u(u,model,bc)
 
-     call od_calc_output(output,model,u)
+    print *,"Calculating stress and strain..."; print *
 
-     print *,"Judging the damage state..."; print *
+    call od_calc_output(output,model,u)
 
-     call damage_judgment(model,output,max_sig)
+    print *,"Judging the damage state..."; print *
 
-!     call visualize_u(model,u)
+    if (damaged) then
+      damaged = damage_judgment(model,output,max_sig)
+print *,'already damaged'
+    else
+      damaged = damage_judgment(model,output,max_sig)
+      if (damaged) then
+print *, 'damaged!!! step',step
+      else
+        print *,'undamaged'
+      end if
+    end if
 
-     print *,"Outputting file..."; print *
+!    call visualize_u(model,u)
+
+    print *,"Outputting file..."; print *
 
     write(output_file_name,'(a,i0)') "step", step
      call od_output_inp(model,output,trim(od_data_path)//output_file_name)
 
 
-     print *,"Clearing data..."; print *
+    print *,"Clearing data..."; print *
 
-     call clear_output(output)
-     call clear_bc(bc)
-     call clear_addition_matrix_sln(k,index_k_diag)
+    call clear_output(output)
+    call clear_bc(bc)
+    call clear_addition_matrix_sln(k,index_k_diag)
 
-   end do
+  end do
 
+  close(10)
   call clear_model(model)
 
   end do
 
 
-   print *,"Calculation was completed successfully!"; print *
+  print *,"Calculation was completed successfully!"; print *
 
   print *,"- Press ENTER to finish -"; print *
 
@@ -162,13 +186,42 @@ print *,u_
 
 contains
 
+subroutine calc_reaction_force(sum_f,model,u)
+  type(struct_model) :: model
+  real(8) :: sum_f,u(:),penalty
+  integer,pointer :: left_nodes(:), right_nodes(:)
+  integer n_left_nodes, n_right_nodes
+  integer i,dim
 
-subroutine damage_judgment(model,output,max_sig)
+  n_left_nodes = ubound(model%data(1)%i,1)
+  n_right_nodes = ubound(model%data(2)%i,1)
+  left_nodes => model%data(1)%i(:,1,1)
+  right_nodes => model%data(2)%i(:,1,1)
+  dim = model%dim
+  penalty = 1d30
+
+  sum_f = 0d0
+  do i=1,n_left_nodes
+    sum_f = sum_f + u(left_nodes(i)*dim-1)*penalty
+!print *, u(left_nodes(i)*dim-1)*penalty
+  end do
+print *,-sum_f
+  sum_f = 0d0
+  do i=1,n_right_nodes
+    sum_f = sum_f + u(right_nodes(i)*dim-1)*penalty
+!print *, u(right_nodes(i)*dim-1)*penalty
+!print *, right_nodes(i)*dim-1
+  end do
+print *,-sum_f
+end subroutine
+
+function damage_judgment(model,output,max_sig)
   type(struct_model) :: model
   type(struct_output) :: output
   integer n_els,i
   real(8),pointer :: sig(:,:),angle(:),damage_tensor(:,:)
   real(8) :: max_sig(:,:),sig_rot(6)
+  logical damage_judgment,damaged
 
   n_els = model%n_els
   angle => model%data(1)%d(:,1,1)
@@ -184,6 +237,7 @@ subroutine damage_judgment(model,output,max_sig)
 !   max_sig(4) = 40.2*1d6
 !   max_sig(5) = 40.2*1d6
 !   max_sig(6) = 40.2*1d6
+  damaged = .false.
 
   do i=1,n_els
     sig_rot = rot_sig(sig(:,i),angle(i))
@@ -191,25 +245,32 @@ subroutine damage_judgment(model,output,max_sig)
     if (model%material_nos(i) == 2) then ! x:L y:T z:Z
       if (max_sig(1,2) < sig_rot(1)) then
         damage_tensor(1,i) = 0.999d0
+        damaged = .true.
       else if (max_sig(2,2) < sig_rot(2)) then
         damage_tensor(2,i) = 0.999d0
+        damaged = .true.
       else if (max_sig(6,2) < sig_rot(6)) then
         damage_tensor(2,i) = 0.999d0
+        damaged = .true.
       end if
     else if (model%material_nos(i) == 3) then ! x:T y:Z z:L
       if (max_sig(1,3) < sig_rot(1)) then
         damage_tensor(1,i) = 0.999d0
+        damaged = .true.
       else if (max_sig(2,3) < sig_rot(2)) then
         damage_tensor(2,i) = 0.999d0
+        damaged = .true.
       else if (max_sig(6,3) < sig_rot(6)) then
         damage_tensor(1,i) = 0.999d0
         damage_tensor(2,i) = 0.999d0
+        damaged = .true.
       end if
     end if
+    damage_judgment = damaged
 
   end do
 
-end subroutine
+end function
 
 
 function uniform_rand_integer(min,max)
@@ -265,6 +326,7 @@ subroutine frp_set_tensile_bc(bc,model,ux) ! 生成した2周期4層のFRPモデ
   dim = model%dim
 
   vertical_center = n_left_nodes/2
+print *,n_left_nodes,vertical_center
 
   n_spc = n_left_nodes+n_right_nodes
 
