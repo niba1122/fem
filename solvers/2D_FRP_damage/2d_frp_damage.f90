@@ -19,7 +19,7 @@ program fem
   real(8) u_, du ! 損傷進展解析の変位、変位増分
   integer damaged_step
   logical damaged
-  real(8) sum_f ! 反力の合計
+  real(8) f_left, f_right ! 反力の合計(左右)
   real(8) :: max_sig(6,4) ! 損傷の閾値
   real(8) :: vf !繊維束の体積含有率
   integer,allocatable,dimension(:) :: index_k_diag
@@ -34,17 +34,17 @@ program fem
   character errmsg*128
 
 
-  character(32) output_file_name,od_data_path
+  character(32) output_file_name,od_data_path,od_model_name
   character(128) command
-
 
 !-------------------------------------------------------------------------------------------------------
 !  Config
 !-------------------------------------------------------------------------------------------------------
 
   du = 1d-5
-  model_no = 1
-  max_step = 10
+  model_no = 3
+  max_step = 8
+  od_model_name = "gfrp_damage"
 
 
 !-------------------------------------------------------------------------------------------------------
@@ -52,14 +52,16 @@ program fem
 !-------------------------------------------------------------------------------------------------------
 
 
-  model%name = "gfrp_damage"
-  write(command,'(a)') "mkdir "//trim(path_model)//trim(model%name)
-print *,"mkdir "//trim(path_model)//trim(model%name)
+  write(command,'(a)') "mkdir "//trim(path_model)//trim(od_model_name)
+print *,"mkdir "//trim(path_model)//trim(od_model_name)
   call system(command)
 
 
-  open(11, file=trim(path_model)//trim(model%name)//slash//'models.csv')
-        write(11,*) 'model_no, vf, stress2L, stress2T, stress2TL, stress3T, stress3Z, stress3TZ, step'
+  open(11, file=trim(path_model)//trim(od_model_name)//slash//'models.csv')
+  write(11,*) 'du, ',du
+  write(11,*) 'model_no, ',model_no
+  write(11,*) 'model_no, vf, stress2L, stress2T, stress2TL, stress3T, stress3Z, stress3TZ,&
+    &shift(1),shift(2),shift(3),shift(4), step of initail fraction'
 
   do i=1,model_no
   write(i_char, '(i0)') i
@@ -69,7 +71,7 @@ print *,"mkdir "//trim(path_model)//trim(model%name)
   write(*,'(a)') " ------------------------------"
 
 
-  shift(1) = uniform_rand_integer(0,53)
+  shift(1) = 0
   shift(2) = uniform_rand_integer(0,53)
   shift(3) = uniform_rand_integer(0,53)
   shift(4) = uniform_rand_integer(0,53)
@@ -92,6 +94,8 @@ print *,"mkdir "//trim(path_model)//trim(model%name)
 
   call generate_FRP_Model(model,shift)
 
+  model%name = od_model_name
+
   call set_state2d(model,1,1d0)
 
 
@@ -99,18 +103,23 @@ print *,"mkdir "//trim(path_model)//trim(model%name)
 
   write(od_data_path,'(a,i0,a)') "model", i, slash
   write(command,'(a,a,a,a,a)') "mkdir ", trim(path_model), trim(model%name),slash, trim(od_data_path)
-
+print *,"mkdir ", trim(path_model), trim(model%name),slash, trim(od_data_path)
   call system(command)
 
   ! モデルごとのデータ出力
-  open(10, file=trim(path_model)//trim(model%name)//slash//trim(od_data_path)//'model'//trim(i_char)//'.csv')
+  open(20, file=trim(path_model)//trim(model%name)//slash//trim(od_data_path)//'model'//trim(i_char)//'.csv')
+  write(20,*) 'f_left,f_right'
   damaged = .false.
+
+
+  allocate(f(model%dim*model%n_nds))
+  allocate(u(model%n_nds*model%dim))
+
+print *,ubound(model%data(1)%i,1),ubound(model%data(2)%i,1)
 
   do step=1,max_step
     write(step_char, '(i0)') step
 
-    if (.not. allocated(f)) allocate(f(model%dim*model%n_nds))
-    if (.not. allocated(u)) allocate(u(model%n_nds*model%dim))
 
     u = 0d0
     f = 0d0
@@ -127,11 +136,15 @@ print *,u_
 
     print *,"Solving stiffness equation..."; print *
     call set_cc(k,f,model,bc,index_k_diag)
-
+print *,'a'
 
     u = sl_LDL(K,f,index_k_diag)
+print *,'b'
 
-    call calc_reaction_force(sum_f,model,u)
+    call calc_reaction_force(f_left,f_right,model,u)
+    write(20,'(d30.15,",",d30.15)') f_left, f_right
+
+    print *,'f:',f_left,f_right
 
     call set_constrained_u(u,model,bc)
 
@@ -147,8 +160,9 @@ print *,'already damaged'
     else
       damaged = damage_judgment(model,output,max_sig)
       if (damaged) then
-        write(11,'(i0,7(",",d30.15),",",i0)') &
-          &model, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3), step
+        write(11,'(i0,7(",",d30.15),5(",",i0))') &
+          &i, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3),&
+            &shift(1), shift(2), shift(3), shift(4), step
 print *, 'damaged!!! step',step
       else
         print *,'undamaged'
@@ -171,8 +185,11 @@ print *, 'damaged!!! step',step
 
   end do
 
-  close(10)
+  close(20)
   call clear_model(model)
+
+  deallocate(f)
+  deallocate(u)
 
   end do
 
@@ -215,9 +232,9 @@ subroutine calc_strength(max_sig,vf)
 
 end subroutine
 
-subroutine calc_reaction_force(sum_f,model,u)
+subroutine calc_reaction_force(f_left,f_right,model,u)
   type(struct_model) :: model
-  real(8) :: sum_f,u(:),penalty
+  real(8) :: f_left,f_right,u(:),penalty
   integer,pointer :: left_nodes(:), right_nodes(:)
   integer n_left_nodes, n_right_nodes
   integer i,dim
@@ -229,19 +246,17 @@ subroutine calc_reaction_force(sum_f,model,u)
   dim = model%dim
   penalty = 1d30
 
-  sum_f = 0d0
+  f_left = 0d0
   do i=1,n_left_nodes
-    sum_f = sum_f + u(left_nodes(i)*dim-1)*penalty
+    f_left = f_left + u(left_nodes(i)*dim-1)*penalty
 !print *, u(left_nodes(i)*dim-1)*penalty
   end do
-print *,-sum_f
-  sum_f = 0d0
+  f_right = 0d0
   do i=1,n_right_nodes
-    sum_f = sum_f + u(right_nodes(i)*dim-1)*penalty
+    f_right = f_right + u(right_nodes(i)*dim-1)*penalty
 !print *, u(right_nodes(i)*dim-1)*penalty
 !print *, right_nodes(i)*dim-1
   end do
-print *,-sum_f
 end subroutine
 
 function damage_judgment(model,output,max_sig)
