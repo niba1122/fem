@@ -1211,7 +1211,7 @@ subroutine generate_FRP_Model(model,shift)
 	allocate(model%elements(4,lastElement))
 	allocate(model%material_nos(lastElement))
 	allocate(model%materials(6,6,4))
-	allocate(model%data(4))
+	allocate(model%data(6))
 	allocate(angle(lastElement))
 
 !物性値
@@ -1281,6 +1281,7 @@ model%materials(6,:,4) = (/0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 11538461
 
 ! 上下左右端のノードを保存
 
+
 ! 左端
 
 k=0
@@ -1292,6 +1293,7 @@ k=0
 
 	allocate(model%data(1)%i(k,1,1))
 
+
 k=1
 	do i=1,NumOfPeriodsY
 		do j=bottomNodesOfLamina(1,i),topNodesOfLamina(1,i)
@@ -1300,6 +1302,9 @@ k=1
 		end do
 	end do
 
+! 左中央
+	allocate(model%data(5)%i(1,1,1))
+	model%data(5)%i(1,1,1) = topNodesOfLamina(1,NumOfPeriodsY/2)
 
 ! 右端
 k=0
@@ -1319,6 +1324,13 @@ K=1
 		end do
 	end do
 
+
+
+! 右中央
+	allocate(model%data(6)%i(1,1,1))
+	model%data(6)%i(1,1,1) = topNodesOfLamina(NumOfElementsInOneLaminaX,NumOfPeriodsY/2)
+
+
 ! 下端
 	allocate(model%data(3)%i(NumOfElementsInOneLaminaX,1,1))
 
@@ -1333,6 +1345,7 @@ K=1
 	do i=1,NumOfElementsInOneLaminaX
 		model%data(4)%i(i,1,1) = topNodesOfLamina(i,NumOfPeriodsY)
 	end do
+
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

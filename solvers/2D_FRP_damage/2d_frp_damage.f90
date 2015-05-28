@@ -43,7 +43,7 @@ program fem
 
   du = 1d-5
   model_no = 3
-  max_step = 8
+  max_step = 1
   od_model_name = "gfrp_damage"
 
 
@@ -61,7 +61,7 @@ print *,"mkdir "//trim(path_model)//trim(od_model_name)
   write(11,*) 'du, ',du
   write(11,*) 'model_no, ',model_no
   write(11,*) 'model_no, vf, stress2L, stress2T, stress2TL, stress3T, stress3Z, stress3TZ,&
-    &shift(1),shift(2),shift(3),shift(4), step of initail fraction'
+    &shift(1),shift(2),shift(3),shift(4), step of initial fraction'
 
   do i=1,model_no
   write(i_char, '(i0)') i
@@ -354,8 +354,8 @@ subroutine frp_set_tensile_bc(bc,model,ux) ! 生成した2周期4層のFRPモデ
   type(struct_model) :: model
   type(struct_bc) :: bc
   real(8) ux
-  integer i,n_top_nodes,n_bottom_nodes,n_left_nodes,n_right_nodes,vertical_center,spc_index,n_spc,dim
-  integer,pointer :: left_nodes(:), right_nodes(:), bottom_nodes(:), top_nodes(:)
+  integer i,n_top_nodes,n_bottom_nodes,n_left_nodes,n_right_nodes,spc_index,n_spc,dim
+  integer,pointer :: left_nodes(:), right_nodes(:), bottom_nodes(:), top_nodes(:), left_center_node, right_center_node
 
   n_left_nodes = ubound(model%data(1)%i,1)
   n_right_nodes = ubound(model%data(2)%i,1)
@@ -366,10 +366,10 @@ subroutine frp_set_tensile_bc(bc,model,ux) ! 生成した2周期4層のFRPモデ
   right_nodes => model%data(2)%i(:,1,1)
   bottom_nodes => model%data(3)%i(:,1,1)
   top_nodes => model%data(4)%i(:,1,1)
+  left_center_node => model%data(5)%i(1,1,1)
+  right_center_node => model%data(6)%i(1,1,1)
 
   dim = model%dim
-
-  vertical_center = n_left_nodes/2
 
   n_spc = n_left_nodes+n_right_nodes
 
@@ -381,7 +381,7 @@ subroutine frp_set_tensile_bc(bc,model,ux) ! 生成した2周期4層のFRPモデ
 
   spc_index = 1
   do i=1,n_left_nodes
-    if (i==vertical_center) then
+    if (left_nodes(i) == left_center_node) then
       bc%nodes_spc(:,spc_index) = (/left_nodes(i),1,1/)
       bc%disp_spc(:,spc_index) = (/0d0,0d0/)
     else
@@ -392,7 +392,7 @@ subroutine frp_set_tensile_bc(bc,model,ux) ! 生成した2周期4層のFRPモデ
   end do
 
   do i=1,n_right_nodes
-    if (i==vertical_center) then
+    if (right_nodes(i) == right_center_node) then
       bc%nodes_spc(:,spc_index) = (/right_nodes(i),1,1/)
       bc%disp_spc(:,spc_index) = (/ux,0d0/)
     else
