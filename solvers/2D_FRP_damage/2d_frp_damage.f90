@@ -136,10 +136,8 @@ print *,u_
 
     print *,"Solving stiffness equation..."; print *
     call set_cc(k,f,model,bc,index_k_diag)
-print *,'a'
 
     u = sl_LDL(K,f,index_k_diag)
-print *,'b'
 
     call calc_reaction_force(f_left,f_right,model,u)
     write(20,'(d30.15,",",d30.15)') f_left, f_right
@@ -246,7 +244,6 @@ subroutine calc_reaction_force(f_left,f_right,model,u)
   dim = model%dim
   penalty = 1d30
 
-print *,left_nodes
   f_left = 0d0
   do i=1,n_left_nodes
     f_left = f_left + u(left_nodes(i)*dim-1)*penalty
