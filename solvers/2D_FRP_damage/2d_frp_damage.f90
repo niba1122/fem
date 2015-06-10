@@ -246,16 +246,18 @@ subroutine calc_reaction_force(f_left,f_right,model,u)
   dim = model%dim
   penalty = 1d30
 
+print *,left_nodes
   f_left = 0d0
   do i=1,n_left_nodes
     f_left = f_left + u(left_nodes(i)*dim-1)*penalty
 !print *, u(left_nodes(i)*dim-1)*penalty
+!print *, u(left_nodes(i)*dim-1)
   end do
   f_right = 0d0
   do i=1,n_right_nodes
     f_right = f_right + u(right_nodes(i)*dim-1)*penalty
 !print *, u(right_nodes(i)*dim-1)*penalty
-!print *, right_nodes(i)*dim-1
+!print *, u(right_nodes(i)*dim-1)
   end do
 end subroutine
 
@@ -378,6 +380,9 @@ subroutine frp_set_tensile_bc(bc,model,ux) ! 生成した2周期4層のFRPモデ
 
   allocate(bc%nodes_spc(dim+1,n_spc))
   allocate(bc%disp_spc(dim,n_spc))
+  
+  bc%nodes_spc = 0
+  bc%disp_spc = 0d0
 
   spc_index = 1
   do i=1,n_left_nodes
