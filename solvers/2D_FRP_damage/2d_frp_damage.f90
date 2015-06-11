@@ -17,8 +17,9 @@ program fem
   real(8),allocatable,target :: angle(:)
   real(8),allocatable,target :: damage_tensor(:,:)
   real(8) u_, du ! 損傷進展解析の変位、変位増分
-  integer damaged_step
-  logical damaged
+  integer damage_ratio_step
+!  logical damage_ratio
+  real(8) damage_ratio
   real(8) f_left, f_right ! 反力の合計(左右)
   real(8) :: max_sig(6,4) ! 損傷の閾値
   real(8) :: vf !繊維束の体積含有率
@@ -42,8 +43,8 @@ program fem
 !-------------------------------------------------------------------------------------------------------
 
   du = 1d-5
-  model_no = 3
-  max_step = 1
+  model_no = 1
+  max_step = 4
   od_model_name = "gfrp_damage"
 
 
@@ -109,22 +110,37 @@ print *,"mkdir ", trim(path_model), trim(model%name),slash, trim(od_data_path)
   ! モデルごとのデータ出力
   open(20, file=trim(path_model)//trim(model%name)//slash//trim(od_data_path)//'model'//trim(i_char)//'.csv')
   write(20,*) 'f_left,f_right'
-  damaged = .false.
-
+!  damage_ratio = .false.
+  damage_ratio = 0d0
+  u_ = 0d0
 
   allocate(f(model%dim*model%n_nds))
   allocate(u(model%n_nds*model%dim))
 
 print *,ubound(model%data(1)%i,1),ubound(model%data(2)%i,1)
 
-  do step=1,max_step
+!  do step=1,max_step
+step = 0
+  do
+    step = step+1
+    if (step > max_step) then
+      exit
+    end if
+
     write(step_char, '(i0)') step
 
 
     u = 0d0
     f = 0d0
 
-    u_ = du*step
+!    u_ = du*step
+if (step == 2) then
+print *, ceiling(1 / damage_ratio)
+  step = ceiling(1 / damage_ratio)
+end if
+u_ = du * step
+  
+
 print *,u_
     call frp_set_tensile_bc(bc,model,u_)
 
@@ -152,12 +168,27 @@ print *,u_
 
     print *,"Judging the damage state..."; print *
 
-    if (damaged) then
-      damaged = damage_judgment(model,output,max_sig)
+!    if (damage_ratio) then
+!      damage_ratio = damage_judgment(model,output,max_sig)
+!print *,'already damage_ratio'
+!    else
+!      damage_ratio = damage_judgment(model,output,max_sig)
+!      if (damage_ratio) then
+!        write(11,'(i0,7(",",d30.15),5(",",i0))') &
+!          &i, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3),&
+!            &shift(1), shift(2), shift(3), shift(4), step
+!print *, 'damage_ratio!!! step',step
+!      else
+!        print *,'undamage_ratio'
+!      end if
+!    end if
+
+    if (damage_ratio>=1) then
+      damage_ratio = damage_judgment(model,output,max_sig)
 print *,'already damaged'
     else
-      damaged = damage_judgment(model,output,max_sig)
-      if (damaged) then
+      damage_ratio = damage_judgment(model,output,max_sig)
+      if (damage_ratio>=1) then
         write(11,'(i0,7(",",d30.15),5(",",i0))') &
           &i, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3),&
             &shift(1), shift(2), shift(3), shift(4), step
@@ -166,7 +197,6 @@ print *, 'damaged!!! step',step
         print *,'undamaged'
       end if
     end if
-
 !    call visualize_u(model,u)
 
     print *,"Outputting file..."; print *
@@ -264,7 +294,8 @@ function damage_judgment(model,output,max_sig)
   integer n_els,i
   real(8),pointer :: sig(:,:),angle(:),damage_tensor(:,:)
   real(8) :: max_sig(:,:),sig_rot(6)
-  logical damage_judgment,damaged
+!  logical damage_judgment,damage_ratio
+  real(8) damage_judgment,damage_ratio ! damage_ratio: sig/maxsig 1以上で損傷発生
 
   n_els = model%n_els
   angle => model%data(1)%d(:,1,1)
@@ -280,7 +311,7 @@ function damage_judgment(model,output,max_sig)
 !   max_sig(4) = 40.2*1d6
 !   max_sig(5) = 40.2*1d6
 !   max_sig(6) = 40.2*1d6
-  damaged = .false.
+  damage_judgment = 0d0
 
   do i=1,n_els
     sig_rot = rot_sig(sig(:,i),angle(i))
@@ -288,31 +319,66 @@ function damage_judgment(model,output,max_sig)
     if (model%material_nos(i) == 2) then ! x:L y:T z:Z
       if (max_sig(1,2) < sig_rot(1)) then
         damage_tensor(1,i) = 0.999d0
-        damaged = .true.
+!        damage_ratio = .true.
       else if (max_sig(2,2) < sig_rot(2)) then
         damage_tensor(2,i) = 0.999d0
-        damaged = .true.
+!        damage_ratio = .true.
       else if (max_sig(6,2) < sig_rot(6)) then
         damage_tensor(2,i) = 0.999d0
-        damaged = .true.
+!        damage_ratio = .true.
       end if
+
+
+damage_ratio = dabs(sig_rot(1)/max_sig(1,2))
+if (damage_ratio > damage_judgment) then
+  damage_judgment = damage_ratio
+end if
+damage_ratio = dabs(sig_rot(2)/max_sig(2,2))
+if (damage_ratio > damage_judgment) then
+  damage_judgment = damage_ratio
+end if
+damage_ratio = dabs(sig_rot(6)/max_sig(6,2))
+if (damage_ratio > damage_judgment) then
+  damage_judgment = damage_ratio
+end if
+
+
     else if (model%material_nos(i) == 3) then ! x:T y:Z z:L
       if (max_sig(1,3) < sig_rot(1)) then
         damage_tensor(1,i) = 0.999d0
-        damaged = .true.
+!        damage_ratio = .true.
       else if (max_sig(2,3) < sig_rot(2)) then
         damage_tensor(2,i) = 0.999d0
-        damaged = .true.
+!        damage_ratio = .true.
       else if (max_sig(6,3) < sig_rot(6)) then
         damage_tensor(1,i) = 0.999d0
         damage_tensor(2,i) = 0.999d0
-        damaged = .true.
+!        damage_ratio = .true.
       end if
+
+
+damage_ratio = dabs(sig_rot(1)/max_sig(1,3))
+if (damage_ratio > damage_judgment) then
+  damage_judgment = damage_ratio
+end if
+damage_ratio = dabs(sig_rot(2)/max_sig(2,3))
+if (damage_ratio > damage_judgment) then
+  damage_judgment = damage_ratio
+end if
+damage_ratio = dabs(sig_rot(6)/max_sig(6,3))
+if (damage_ratio > damage_judgment) then
+  damage_judgment = damage_ratio
+end if
+
+
     end if
-    damage_judgment = damaged
+
+
+
+!    damage_judgment = damage_ratio
 
   end do
-
+print *,"damage_judgment = ", damage_judgment
 end function
 
 
