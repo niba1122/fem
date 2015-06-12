@@ -44,7 +44,7 @@ program fem
 
   du = 1d-5
   model_no = 1
-  max_step = 4
+  max_step = 20
   od_model_name = "gfrp_damage"
 
 
@@ -318,13 +318,13 @@ function damage_judgment(model,output,max_sig)
 
     if (model%material_nos(i) == 2) then ! x:L y:T z:Z
       if (max_sig(1,2) < sig_rot(1)) then
-        damage_tensor(1,i) = 0.999d0
+        damage_tensor(1,i) = 0.99d0
 !        damage_ratio = .true.
       else if (max_sig(2,2) < sig_rot(2)) then
-        damage_tensor(2,i) = 0.999d0
+        damage_tensor(2,i) = 0.99d0
 !        damage_ratio = .true.
       else if (max_sig(6,2) < sig_rot(6)) then
-        damage_tensor(2,i) = 0.999d0
+        damage_tensor(2,i) = 0.99d0
 !        damage_ratio = .true.
       end if
 
@@ -345,14 +345,14 @@ end if
 
     else if (model%material_nos(i) == 3) then ! x:T y:Z z:L
       if (max_sig(1,3) < sig_rot(1)) then
-        damage_tensor(1,i) = 0.999d0
+        damage_tensor(1,i) = 0.99d0
 !        damage_ratio = .true.
       else if (max_sig(2,3) < sig_rot(2)) then
-        damage_tensor(2,i) = 0.999d0
+        damage_tensor(2,i) = 0.99d0
 !        damage_ratio = .true.
       else if (max_sig(6,3) < sig_rot(6)) then
-        damage_tensor(1,i) = 0.999d0
-        damage_tensor(2,i) = 0.999d0
+        damage_tensor(1,i) = 0.99d0
+        damage_tensor(2,i) = 0.99d0
 !        damage_ratio = .true.
       end if
 
@@ -506,21 +506,28 @@ function od_set_damage_tensor(D,damage_tensor)
   real(8) :: D(:,:),damage_tensor(:),dl,dt,dz
   real(8) :: od_set_damage_tensor(6,6)
 
-  od_set_damage_tensor = 0d0
+!  od_set_damage_tensor = 0d0
 
   dl = 1d0-damage_tensor(1)
   dt = 1d0-damage_tensor(2)
   dz = 1d0-damage_tensor(3)
 
-  od_set_damage_tensor(1,:) = D(1,:) * dl
-  od_set_damage_tensor(2,:) = D(2,:) * dt
-  od_set_damage_tensor(3,:) = D(3,:) * dz
-  od_set_damage_tensor(:,1) = D(1,:) * dl
-  od_set_damage_tensor(:,2) = D(2,:) * dt
-  od_set_damage_tensor(:,3) = D(3,:) * dz
-  od_set_damage_tensor(4,4) = D(4,4) * 4d0 * dt*dz/((dt+dz)**2)
-  od_set_damage_tensor(5,5) = D(5,5) * 4d0 * dz*dl/((dz+dl)**2)
-  od_set_damage_tensor(6,6) = D(6,6) * 4d0 * dl*dt/((dl+dt)**2)
+  od_set_damage_tensor = D(1:6,1:6) 
+
+  od_set_damage_tensor(1,:) = od_set_damage_tensor(1,:) * dl
+  od_set_damage_tensor(2,:) = od_set_damage_tensor(2,:) * dt
+  od_set_damage_tensor(3,:) = od_set_damage_tensor(3,:) * dz
+  od_set_damage_tensor(:,1) = od_set_damage_tensor(:,1) * dl
+  od_set_damage_tensor(:,2) = od_set_damage_tensor(:,2) * dt
+  od_set_damage_tensor(:,3) = od_set_damage_tensor(:,3) * dz
+  od_set_damage_tensor(4,4) = od_set_damage_tensor(4,4) * 4d0 * (dt*dz/(dt+dz))**2
+  od_set_damage_tensor(5,5) = od_set_damage_tensor(5,5) * 4d0 * (dz*dl/(dz+dl))**2
+  od_set_damage_tensor(6,6) = od_set_damage_tensor(6,6) * 4d0 * (dl*dt/(dl+dt))**2
+
+
+if ( (damage_tensor(1) > 0.1d0) .or. (damage_tensor(2) > 0.1d0) .or. (damage_tensor(3) > 0.1d0) ) then
+  !print *, damage_tensor(1),damage_tensor(2), damage_tensor(3), dl,dt,dz
+end if
 
 end function
 

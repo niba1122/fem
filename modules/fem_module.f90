@@ -1045,7 +1045,6 @@ if (nmpc /= 0) then
 	allocate(bc%mpc_slave_dir(nmpc))
 	allocate(bc%mpc_param(nmpc))
 
-	mpcdir = 0d0
 	do i=1,nmpc
 ! 		read (10,*,iostat=iostat) nodes_mpc(:,i),mpcdir(1:dim,i)
 		read (10,*,iostat=iostat) bc%mpc_master_id(i),bc%mpc_master_dir(i),bc%mpc_slave_id(i),&
