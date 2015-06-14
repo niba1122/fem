@@ -255,8 +255,8 @@ subroutine calc_strength(max_sig,vf)
   max_sig(6,2) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! I II
 ! 材料3の強度
   max_sig(2,3) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
-  max_sig(3,3) = 34.3*1d6+(vf-0.6d0)*(-18.5d6) ! III 
-  max_sig(4,3) = 40.2*1d6+(vf-0.6d0)*(-21.8d6) ! II III
+  max_sig(3,3) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! III 
+  max_sig(4,3) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! II III
 
 end subroutine
 
@@ -294,7 +294,6 @@ function damage_judgment(model,output,max_sig)
   integer n_els,i
   real(8),pointer :: sig(:,:),angle(:),damage_tensor(:,:)
   real(8) :: max_sig(:,:),sig_rot(6)
-!  logical damage_judgment,damage_ratio
   real(8) damage_judgment,damage_ratio ! damage_ratio: sig/maxsig 1以上で損傷発生
 
   n_els = model%n_els
@@ -303,79 +302,60 @@ function damage_judgment(model,output,max_sig)
 
   damage_tensor => model%data(2)%d(:,:,1)
 
-!   max_sig = 0d0
-
-!   max_sig(1) = 1000.3*1d6
-!   max_sig(2) = 34.3*1d6
-!   max_sig(3) = 34.3*1d6
-!   max_sig(4) = 40.2*1d6
-!   max_sig(5) = 40.2*1d6
-!   max_sig(6) = 40.2*1d6
-  damage_judgment = 0d0
-
   do i=1,n_els
     sig_rot = rot_sig(sig(:,i),angle(i))
 
     if (model%material_nos(i) == 2) then ! x:L y:T z:Z
       if (max_sig(1,2) < sig_rot(1)) then
         damage_tensor(1,i) = 0.99d0
-!        damage_ratio = .true.
       else if (max_sig(2,2) < sig_rot(2)) then
         damage_tensor(2,i) = 0.99d0
-!        damage_ratio = .true.
       else if (max_sig(6,2) < sig_rot(6)) then
         damage_tensor(2,i) = 0.99d0
-!        damage_ratio = .true.
       end if
 
 
-damage_ratio = dabs(sig_rot(1)/max_sig(1,2))
-if (damage_ratio > damage_judgment) then
-  damage_judgment = damage_ratio
-end if
-damage_ratio = dabs(sig_rot(2)/max_sig(2,2))
-if (damage_ratio > damage_judgment) then
-  damage_judgment = damage_ratio
-end if
-damage_ratio = dabs(sig_rot(6)/max_sig(6,2))
-if (damage_ratio > damage_judgment) then
-  damage_judgment = damage_ratio
-end if
+      damage_ratio = dabs(sig_rot(1)/max_sig(1,2))
+      if (damage_ratio > damage_judgment) then
+        damage_judgment = damage_ratio
+      end if
+      damage_ratio = dabs(sig_rot(2)/max_sig(2,2))
+      if (damage_ratio > damage_judgment) then
+        damage_judgment = damage_ratio
+      end if
+      damage_ratio = dabs(sig_rot(6)/max_sig(6,2))
+      if (damage_ratio > damage_judgment) then
+        damage_judgment = damage_ratio
+      end if
 
 
     else if (model%material_nos(i) == 3) then ! x:T y:Z z:L
       if (max_sig(2,3) < sig_rot(1)) then
         damage_tensor(2,i) = 0.99d0
-!        damage_ratio = .true.
       else if (max_sig(3,3) < sig_rot(2)) then
         damage_tensor(3,i) = 0.99d0
-!        damage_ratio = .true.
       else if (max_sig(4,3) < sig_rot(6)) then
         damage_tensor(2,i) = 0.99d0
         damage_tensor(3,i) = 0.99d0
-!        damage_ratio = .true.
       end if
 
 
-damage_ratio = dabs(sig_rot(1)/max_sig(2,3))
-if (damage_ratio > damage_judgment) then
-  damage_judgment = damage_ratio
-end if
-damage_ratio = dabs(sig_rot(2)/max_sig(3,3))
-if (damage_ratio > damage_judgment) then
-  damage_judgment = damage_ratio
-end if
-damage_ratio = dabs(sig_rot(6)/max_sig(4,3))
-if (damage_ratio > damage_judgment) then
-  damage_judgment = damage_ratio
-end if
+      damage_ratio = dabs(sig_rot(1)/max_sig(2,3))
+      if (damage_ratio > damage_judgment) then
+        damage_judgment = damage_ratio
+      end if
+      damage_ratio = dabs(sig_rot(2)/max_sig(3,3))
+      if (damage_ratio > damage_judgment) then
+        damage_judgment = damage_ratio
+      end if
+      damage_ratio = dabs(sig_rot(6)/max_sig(4,3))
+      if (damage_ratio > damage_judgment) then
+        damage_judgment = damage_ratio
+      end if
 
 
     end if
 
-
-
-!    damage_judgment = damage_ratio
 
   end do
 print *,"damage_judgment = ", damage_judgment
@@ -488,7 +468,7 @@ function od_calc_BDB(model,i_el,coord)
 
   od_calc_BDB = 0d0
 
-  D_3d = od_set_damage_tensor(model%materials(:,:,model%material_nos(i_el)), model%data(2)%d(:,i_el,1)) ! 損傷テンソルをDマトリックスへ適用
+  D_3d = od_set_damage_tensor(model,i_el) ! 損傷テンソルをDマトリックスへ適用
 
   D_3d = rot_D(D_3d,model%data(1)%d(i_el,1,1)) ! Dマトリックスの回転
 
@@ -502,19 +482,19 @@ function od_calc_BDB(model,i_el,coord)
 
 end function
 
-function od_set_damage_tensor(D,damage_tensor)
-  real(8) :: D(:,:),damage_tensor(:),dl,dt,dz
+function od_set_damage_tensor(model,i_el)
+  type(struct_model) :: model
+  real(8) :: dl,dt,dz
   real(8) :: od_set_damage_tensor(6,6)
+  integer i_el
 
-!  od_set_damage_tensor = 0d0
+  dl = 1d0-model%data(2)%d(1,i_el,1)
+  dt = 1d0-model%data(2)%d(2,i_el,1)
+  dz = 1d0-model%data(2)%d(3,i_el,1)
 
-  dl = 1d0-damage_tensor(1)
-  dt = 1d0-damage_tensor(2)
-  dz = 1d0-damage_tensor(3)
+  od_set_damage_tensor(1:6,1:6) = model%materials(1:6,1:6,model%material_nos(i_el)) 
 
-  od_set_damage_tensor(1:6,1:6) = D(1:6,1:6) 
-
-  if (model%material_nos(i) == 2) then
+  if (model%material_nos(i_el) == 2) then
     od_set_damage_tensor(1,:) = od_set_damage_tensor(1,:) * dl
     od_set_damage_tensor(2,:) = od_set_damage_tensor(2,:) * dt
     od_set_damage_tensor(3,:) = od_set_damage_tensor(3,:) * dz
@@ -524,7 +504,7 @@ function od_set_damage_tensor(D,damage_tensor)
     od_set_damage_tensor(4,4) = od_set_damage_tensor(4,4) * 4d0 * (dt*dz/(dt+dz))**2
     od_set_damage_tensor(5,5) = od_set_damage_tensor(5,5) * 4d0 * (dz*dl/(dz+dl))**2
     od_set_damage_tensor(6,6) = od_set_damage_tensor(6,6) * 4d0 * (dl*dt/(dl+dt))**2
-  else if (model%material_nos(i) == 3) then
+  else if (model%material_nos(i_el) == 3) then
     od_set_damage_tensor(1,:) = od_set_damage_tensor(1,:) * dt
     od_set_damage_tensor(2,:) = od_set_damage_tensor(2,:) * dz
     od_set_damage_tensor(3,:) = od_set_damage_tensor(3,:) * dl
@@ -535,11 +515,6 @@ function od_set_damage_tensor(D,damage_tensor)
     od_set_damage_tensor(5,5) = od_set_damage_tensor(5,5) * 4d0 * (dl*dt/(dl+dt))**2
     od_set_damage_tensor(6,6) = od_set_damage_tensor(6,6) * 4d0 * (dt*dz/(dt+dz))**2
   end if
-
-
-if ( (damage_tensor(1) > 0.1d0) .or. (damage_tensor(2) > 0.1d0) .or. (damage_tensor(3) > 0.1d0) ) then
-  !print *, damage_tensor(1),damage_tensor(2), damage_tensor(3), dl,dt,dz
-end if
 
 end function
 
@@ -813,9 +788,7 @@ subroutine od_calc_output(output,model,u)
 !   else
 !     call calc_D(D,model,rot_D(model%materials(:,:,model%material_nos(i_el)),data(2)%d(i_el,1,1)))
 
-
-
-    D_3d = od_set_damage_tensor(model%materials(:,:,model%material_nos(i)), model%data(2)%d(:,i,1)) ! 損傷テンソルをDマトリックスへ適用
+    D_3d = od_set_damage_tensor(model,i) ! 損傷テンソルをDマトリックスへ適用
 
     D_3d = rot_D(D_3d,model%data(1)%d(i,1,1)) ! Dマトリックスの回転
 
