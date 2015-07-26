@@ -42,8 +42,8 @@ program PeriodicMeshGenerator2D
 	double precision ux
 
 
-	NumOfPeriodsX = 2
-	NumOfPeriodsY = 4
+	NumOfPeriodsX = 1
+	NumOfPeriodsY = 1
 
 	allocate(thL(NumOfPeriodsX,NumOfPeriodsY))
 	allocate(wL(NumOfPeriodsX,NumOfPeriodsY))

@@ -13,10 +13,9 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
 	integer, parameter :: dim = 2;
 
 	integer,intent(inout) :: NumOfNodes
-! 	integer,parameter :: NumOfNodes = 787
 	integer,parameter :: NumOfElements = 720
 
-	double precision,parameter :: widthOfModel = 9.12d-3
+	double precision,parameter :: widthOfModel = 8.894963d-3
 	double precision,parameter :: thicknessOfInterface = 0.04d-3
 	double precision,parameter :: minThicknessOfMatrix = 0.02d-3
 	double precision,parameter :: ThicknessOfWarp = 0.22d-3
@@ -276,14 +275,14 @@ subroutine addBlock1L(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBl
 							&+tlL+thL+ThicknessOfWarp
 
 	! lower part of Weft
-	nodes(2,lastNode+2) = -(tlL-distalThicknessOfWeft/2)*dcos((x0+widthOfBlock)*pi/wL)&
+	nodes(2,lastNode+2) = -(tlL-distalThicknessOfWeft/2)*dcos(nodes(1,lastNode+2)*pi/wL)&
 												&+tlL+minThicknessOfMatrix-distalThicknessOfWeft/2
 	nodes(2,lastNode+3) = nodes(2,lastNode+2)+thicknessOfInterface/2
 	nodes(2,lastNode+4) = nodes(2,lastNode+3)+thicknessOfInterface/2
 	nodes(2,lastNode+5) = tlL+minThicknessOfMatrix+thicknessOfInterface
 
 	! upper part of Weft
-	nodes(2,lastNode+6) = (thL-distalThicknessOfWeft/2)*dcos((x0+widthOfBlock)*pi/wL)&
+	nodes(2,lastNode+6) = (thL-distalThicknessOfWeft/2)*dcos(nodes(1,lastNode+6)*pi/wL)&
 							&+tlL+minThicknessOfMatrix+thicknessOfInterface+distalThicknessOfWeft/2
 	nodes(2,lastNode+7) = nodes(2,lastNode+6)+thicknessOfInterface/2
 	nodes(2,lastNode+8) = nodes(2,lastNode+7)+thicknessOfInterface/2
@@ -511,6 +510,8 @@ subroutine addBlock2TL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfB
 
 ! x of nodes
 	nodes(1,lastNode+1:lastNode+9) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface*2
+	!nodes(1,lastNode+1:lastNode+9) = nodes(1,lastNode)+((widthOfModel/2 + dxC - wC/2) - thicknessOfInterface - nodes(1,lastNode))/3
+	!nodes(1,lastNode+10) = nodes(1,lastNode)+((widthOfModel/2 + dxC - wC/2) - thicknessOfInterface - nodes(1,lastNode))*2/3
 	nodes(1,lastNode+10:lastnode+19) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface
 	nodes(1,lastNode+20:lastnode+22) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface/2
  	nodes(1,lastNode+23) = nodes(1,lastNode) + widthOfBlock
@@ -523,7 +524,7 @@ subroutine addBlock2TL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfB
 
 
 	nodes(2,lastNode+2:lastNode+8) = nodes(2,lastNode-7:lastNode-1) &
-								& + ((widthOfModel/2 + dxC - wC/2 - thicknessOfInterface*2) - nodes(1,lastNode) )*gradient
+								& + (nodes(1,lastNode+1) - nodes(1,lastNode) )*gradient
 	nodes(2,lastNode+1) = nodes(2,lastNode+2)/2d0
  	nodes(2,lastNode+9) = thicknessOfModel &
  				& - minThicknessOfMatrix - thicknessOfInterface - thC + distalThicknessOfWeft/2
@@ -596,14 +597,14 @@ subroutine addBlock1C(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBl
 	nodes(2,lastNode+13) = thicknessOfModel
 
  	! upper part of Weft
-	nodes(2,lastNode+12) = (thC - distalThicknessOfWeft/2) * dcos(pi/wC*(x0+widthOfBlock-(widthOfModel/2+dxC)))&
+	nodes(2,lastNode+12) = (thC - distalThicknessOfWeft/2) * dcos(pi/wC*(nodes(1,lastNode+12)-(widthOfModel/2+dxC)))&
 								& + thicknessOfModel - minThicknessOfMatrix - thC + distalThicknessOfWeft/2
 	nodes(2,lastNode+11) = nodes(2,lastNode+12) - thicknessOfInterface/2
 	nodes(2,lastNode+10) = nodes(2,lastNode+11) - thicknessOfInterface/2
 	nodes(2,lastNode+9) = thicknessOfModel - minThicknessOfMatrix - thicknessOfInterface&
 								& - thC
  	! lower part of Weft
-	nodes(2,lastNode+8) = - (tlC - distalThicknessOfWeft/2) * dcos(pi/wC*(x0+widthOfBlock-(widthOfModel/2+dxC)))&
+	nodes(2,lastNode+8) = - (tlC - distalThicknessOfWeft/2) * dcos(pi/wC*(nodes(1,lastNode+8)-(widthOfModel/2+dxC)))&
 					& + thicknessOfModel - minThicknessOfMatrix - thicknessOfInterface - thC - distalThicknessOfWeft/2
 	nodes(2,lastNode+7) = nodes(2,lastNode+8) - thicknessOfInterface/2
 	nodes(2,lastNode+6) = nodes(2,lastNode+7) - thicknessOfInterface/2
@@ -924,14 +925,14 @@ subroutine addBlock1R(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBl
 							&+thicknessOfWeft + ThicknessOfWarp
 
 	! lower part of Weft
-	nodes(2,lastNode+2) = -(tlR-distalThicknessOfWeft/2)*dcos((x0+widthOfBlock-widthOfModel)*pi/wR)&
+	nodes(2,lastNode+2) = -(tlR-distalThicknessOfWeft/2)*dcos((nodes(1,lastNode+2)-widthOfModel)*pi/wR)&
 												&+tlR+minThicknessOfMatrix-distalThicknessOfWeft/2
 	nodes(2,lastNode+3) = nodes(2,lastNode+2)+thicknessOfInterface/2
 	nodes(2,lastNode+4) = nodes(2,lastNode+3)+thicknessOfInterface/2
 	nodes(2,lastNode+5) = tlR+minThicknessOfMatrix+thicknessOfInterface
 
 	! upper part of Weft
-	nodes(2,lastNode+6) = (thR-distalThicknessOfWeft/2)*dcos((x0+widthOfBlock-widthOfModel)*pi/wR)&
+	nodes(2,lastNode+6) = (thR-distalThicknessOfWeft/2)*dcos((nodes(1,lastNode+6)-widthOfModel)*pi/wR)&
 							&+tlR+minThicknessOfMatrix+thicknessOfInterface+distalThicknessOfWeft/2
 	nodes(2,lastNode+7) = nodes(2,lastNode+6)+thicknessOfInterface/2
 	nodes(2,lastNode+8) = nodes(2,lastNode+7)+thicknessOfInterface/2
@@ -992,8 +993,8 @@ subroutine generate_FRP_Model(model,shift)
 	double precision,pointer :: angle(:)
 
 
-	NumOfPeriodsX = 2
-	NumOfPeriodsY = 4
+	NumOfPeriodsX = 1
+	NumOfPeriodsY = 1
 
 	allocate(thL(NumOfPeriodsX,NumOfPeriodsY))
 	allocate(wL(NumOfPeriodsX,NumOfPeriodsY))
@@ -1006,10 +1007,11 @@ subroutine generate_FRP_Model(model,shift)
 	thL = 0.11d-3
 	thC = 0.11d-3
 	thR = 0.11d-3
-	wL = 4.04d-3
-	wC = 4.04d-3
-	wR = 4.04d-3
-	dxC = 0.00d-3
+	wL = 3.2d-3
+!	wC = 4.4d-3
+	wC = 3.2d-3
+	wR = 3.2d-3
+	dxC = 0.2d-3
 
 ! 	thC(1,1) = 0.08d-3
 ! 	thC(2,1) = 0.16d-3
