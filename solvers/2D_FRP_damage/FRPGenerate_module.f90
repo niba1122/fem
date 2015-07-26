@@ -13,7 +13,7 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
 	integer, parameter :: dim = 2;
 
 	integer,intent(inout) :: NumOfNodes
-	integer,parameter :: NumOfElements = 720
+	integer,parameter :: NumOfElements = 704
 
 	double precision,parameter :: widthOfModel = 8.894963d-3
 	double precision,parameter :: thicknessOfInterface = 0.04d-3
@@ -21,16 +21,16 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
 	double precision,parameter :: ThicknessOfWarp = 0.22d-3
 	double precision,parameter :: distalThicknessOfWeft = 0.04d-3
 	double precision,parameter :: thicknessOfWeft = 0.22d-3
-	double precision,parameter :: widthOfBlock = widthOfModel/54
+	double precision,parameter :: widthOfBlock = widthOfModel/52
 
 
-	integer,dimension(55) :: bottomNodes,topNodes
+	integer,dimension(53) :: bottomNodes,topNodes
 	double precision,allocatable,dimension(:,:) :: shiftedNodes
 	integer,intent(in) :: shift
 
 	double precision :: thL,tlL,wL,thC,tlC,wC,dxC,thR,tlR,wR
 
-	NumOfNodes = 787
+	NumOfNodes = 769
 	deallocate(nodes)
 	allocate(nodes(dim,NumOfNodes))
 	allocate(shiftedNodes(dim,NumOfNodes))
@@ -86,10 +86,6 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
 		&minThicknessOfMatrix,ThicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
  	print *,"Block2BR was generated"
 
-	call addBlock3LC(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
-		&minThicknessOfMatrix,ThicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
- 	print *,"Block3LC was generated"
-
 	call addBlock2TL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
 		&minThicknessOfMatrix,ThicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
  	print *,"Block2TL was generated"
@@ -103,10 +99,6 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
  	call addBlock2TR(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
 		&minThicknessOfMatrix,ThicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
  	print *,"Block2TR was generated"
-
- 	call addBlock3CR(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
-		&minThicknessOfMatrix,ThicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
- 	print *,"Block3CR was generated"
 
  	call addBlock2BL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
 		&minThicknessOfMatrix,ThicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
@@ -169,7 +161,7 @@ print *,NumOfNodes-bottomNodes(shift+1)+2,":",NumOfNodes,",",topNodes(1)+1,":",t
 		nodes(1,topNodes(1)+1:topNodes(shift+1)) - nodes(1,bottomNodes(shift+1)) + widthOfModel
 	shiftedNodes(2,NumOfNodes-bottomNodes(shift+1)+2:NumOfNodes) = nodes(2,topNodes(1)+1:topNodes(shift+1))
 
-	NumOfNodes = 775+topNodes(shift+1)-bottomNodes(shift+1)
+	NumOfNodes = 757+topNodes(shift+1)-bottomNodes(shift+1)
 	deallocate(nodes)
 	allocate(nodes(dim,NumOfNodes))
 	print *,"numofnodes: ", NumOfNodes
@@ -191,7 +183,9 @@ print *,NumOfNodes-bottomNodes(shift+1)+2,":",NumOfNodes,",",topNodes(1)+1,":",t
 ! 		end if
 ! 	end do
 
+
 end if
+print *,NumOfNodes, NumOfElements
 
 !-------------------------------------------------------------------------------------------------------
 !	Output of model
@@ -976,8 +970,8 @@ subroutine generate_FRP_Model(model,shift)
 
 !	integer :: NumOfNodesInOnePeriod = 787
  	integer NumOfNodesInOnePeriod
-	integer,parameter :: NumOfElementsInOnePeriod = 720
-	integer,parameter :: NumOfNodesInOnePeriodX  = 55
+	integer,parameter :: NumOfElementsInOnePeriod = 704
+	integer,parameter :: NumOfNodesInOnePeriodX  = 53
 
 	double precision,parameter :: ThicknessOfLamina = 0.6d-3
 	double precision,parameter :: thicknessOfInterlaminar = 0.02d-3
@@ -993,8 +987,8 @@ subroutine generate_FRP_Model(model,shift)
 	double precision,pointer :: angle(:)
 
 
-	NumOfPeriodsX = 1
-	NumOfPeriodsY = 1
+	NumOfPeriodsX = 2
+	NumOfPeriodsY = 4
 
 	allocate(thL(NumOfPeriodsX,NumOfPeriodsY))
 	allocate(wL(NumOfPeriodsX,NumOfPeriodsY))
