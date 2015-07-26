@@ -357,8 +357,12 @@ subroutine addBlock2BR(nodes,elements,lastNode,lastElement,widthOfModel,widthOfB
 
 ! x of nodes
 	nodes(1,lastNode+1:lastNode+3) = nodes(1,lastNode-11)+thicknessOfInterface/2
-	nodes(1,lastNode+4:lastNode+13) = nodes(1,lastNode-11)+thicknessOfInterface
-	nodes(1,lastNode+14:lastNode+22) = nodes(1,lastNode-11)+thicknessOfInterface*2
+	nodes(1,lastNode+4:lastNode+12) = nodes(1,lastNode-11)+thicknessOfInterface
+nodes(1,lastNode+13) = nodes(1,lastNode-11)+(nodes(1,lastNode-12)-nodes(1,lastNode-11))/2&
+&+(thicknessOfInterface*2+(widthOfBlock-thicknessOfInterface*2)/2)/3
+	nodes(1,lastNode+14:lastNode+21) = nodes(1,lastNode-11)+thicknessOfInterface*2
+nodes(1,lastNode+22) = nodes(1,lastNode-11)+(nodes(1,lastNode-12)-nodes(1,lastNode-11))/2&
+&+(thicknessOfInterface*2+(widthOfBlock-thicknessOfInterface*2)/2)*2/3
 	nodes(1,lastNode+23:lastNode+31) = nodes(1,lastNode-12) + widthOfBlock
 
 
@@ -503,10 +507,12 @@ subroutine addBlock2TL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfB
 
 
 ! x of nodes
-	nodes(1,lastNode+1:lastNode+9) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface*2
-	!nodes(1,lastNode+1:lastNode+9) = nodes(1,lastNode)+((widthOfModel/2 + dxC - wC/2) - thicknessOfInterface - nodes(1,lastNode))/3
-	!nodes(1,lastNode+10) = nodes(1,lastNode)+((widthOfModel/2 + dxC - wC/2) - thicknessOfInterface - nodes(1,lastNode))*2/3
-	nodes(1,lastNode+10:lastnode+19) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface
+	nodes(1,lastNode+2:lastNode+9) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface*2
+nodes(1,lastNode+1) = nodes(1,lastNode)+(nodes(1,lastNode+2) - nodes(1,lastNode))/2+&
+&(nodes(1,lastNode+2)-nodes(1,lastNode)-widthOfBlock)/3
+	nodes(1,lastNode+11:lastnode+19) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface
+nodes(1,lastNode+10) = nodes(1,lastNode)+(nodes(1,lastNode+2) - nodes(1,lastNode))/2+&
+&(nodes(1,lastNode+2)-nodes(1,lastNode)-widthOfBlock)*2/3
 	nodes(1,lastNode+20:lastnode+22) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface/2
  	nodes(1,lastNode+23) = nodes(1,lastNode) + widthOfBlock
 	nodes(1,lastNode+24:lastnode+34) = widthOfModel/2 + dxC - wC/2
@@ -518,7 +524,7 @@ subroutine addBlock2TL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfB
 
 
 	nodes(2,lastNode+2:lastNode+8) = nodes(2,lastNode-7:lastNode-1) &
-								& + (nodes(1,lastNode+1) - nodes(1,lastNode) )*gradient
+								& + (nodes(1,lastNode+2) - nodes(1,lastNode) )*gradient
 	nodes(2,lastNode+1) = nodes(2,lastNode+2)/2d0
  	nodes(2,lastNode+9) = thicknessOfModel &
  				& - minThicknessOfMatrix - thicknessOfInterface - thC + distalThicknessOfWeft/2
@@ -677,12 +683,16 @@ subroutine addBlock2TR(nodes,elements,lastNode,lastElement,widthOfModel,widthOfB
 	nodes(1,lastNode+1) = nodes(1,lastNode-1) + thicknessOfInterface/2
 	nodes(1,lastNode+2) = nodes(1,lastNode-1) + thicknessOfInterface/2
 	nodes(1,lastNode+3) = nodes(1,lastNode-1) + thicknessOfInterface/2
-	do i=4,13
+	do i=5,13
 		nodes(1,lastNode+i) = nodes(1,lastNode-1) + thicknessOfInterface
 	end do
-	do i=14,22
+  nodes(1,lastNode+4) = nodes(1,lastNode-1)+(nodes(1,lastNode)-nodes(1,lastNode-1))/2&
+  &+(thicknessOfInterface*2+(widthOfBlock-thicknessOfInterface*2)/2)/3
+	do i=15,22
 		nodes(1,lastNode+i) = nodes(1,lastNode-1) + thicknessOfInterface*2
 	end do
+  nodes(1,lastNode+14) = nodes(1,lastNode-1)+(nodes(1,lastNode)-nodes(1,lastNode-1))/2&
+  &+(thicknessOfInterface*2+(widthOfBlock-thicknessOfInterface*2)/2)*2/3
 	do i=23,31
 		nodes(1,lastNode+i) = nodes(1,lastNode) + widthOfBlock
 	end do
@@ -821,8 +831,12 @@ subroutine addBlock2BL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfB
 	lastElement = lastElement+32
 
 ! x of nodes
-	nodes(1,lastNode+1:lastNode+9) = widthOfModel - wR/2 - thicknessOfInterface*2
+	nodes(1,lastNode+1:lastNode+8) = widthOfModel - wR/2 - thicknessOfInterface*2
+  nodes(1,lastNode+9)=nodes(1,lastNode)+(nodes(1,lastNode+1)-nodes(1,lastNode))/2&
+  &+(thicknessOfInterface*2+(widthOfBlock-thicknessOfInterface*2)/2)/3
 	nodes(1,lastNode+10:lastNode+19) = widthOfModel - wR/2 - thicknessOfInterface
+  nodes(1,lastNode+19)=nodes(1,lastNode)+(nodes(1,lastNode+1)-nodes(1,lastNode))/2&
+  &+(thicknessOfInterface*2+(widthOfBlock-thicknessOfInterface*2)/2)*2/3
 	nodes(1,lastNode+20:lastNode+22) = widthOfModel - wR/2 - thicknessOfInterface/2
 	nodes(1,lastNode+23) = nodes(1,lastNode) + widthOfBlock
 	nodes(1,lastNode+24:lastNode+34) = widthOfModel - wR/2
@@ -1001,11 +1015,11 @@ subroutine generate_FRP_Model(model,shift)
 	thL = 0.11d-3
 	thC = 0.11d-3
 	thR = 0.11d-3
-	wL = 3.2d-3
-!	wC = 4.4d-3
-	wC = 3.2d-3
-	wR = 3.2d-3
-	dxC = 0.2d-3
+	wL = 3.6526d-3
+!	wC = 3.6526d-3
+	wC = 3.6526d-3
+	wR = 3.6526d-3
+	dxC = 0d-3
 
 ! 	thC(1,1) = 0.08d-3
 ! 	thC(2,1) = 0.16d-3
@@ -1027,8 +1041,7 @@ subroutine generate_FRP_Model(model,shift)
 	allocate(bottomNodesOfLamina((NumOfNodesInOnePeriodX-1)*NumOfPeriodsX+1,NumOfPeriodsY))
 
 	nodes = 0d0
-	nodes_ = 0d0
-
+	nodes_ = 0d0 
 
 	NumOfElementsInOneLamina = NumOfElementsInOnePeriod*NumOfPeriodsX
 
