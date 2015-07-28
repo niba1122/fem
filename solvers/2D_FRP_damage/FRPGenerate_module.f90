@@ -846,6 +846,7 @@ subroutine addBlock2BL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfB
 	gradient = (thicknessOfInterface - thR + thC + distalThicknessOfWeft) / (widthOfModel/2 - dxC - wR/2 - wC/2)
 
  	nodes(2,lastNode+1) = minThicknessOfMatrix + tlR + distalThicknessOfWeft/2
+ 	nodes(2,lastNode+1) = minThicknessOfMatrix + tlR + thicknessOfInterface-distalThicknessOfWeft/2
 	nodes(2,lastNode+2:lastNode+8) = nodes(2,lastNode-7:lastNode-1) &
  				& + ((widthOfModel - wR/2) - nodes(1,lastNode-1) - thicknessOfInterface*2 )*gradient
 
@@ -857,7 +858,7 @@ subroutine addBlock2BL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfB
  	nodes(2,lastNode+19) = (nodes(2,lastNode) + nodes(2,lastNode+18))/2
  	nodes(2,lastNode+20) = nodes(2,lastNode+1) - thicknessOfInterface/2
  	nodes(2,lastNode+21) = nodes(2,lastNode+1)
- 	nodes(2,lastNode+22) = nodes(2,lastNode+1) + thicknessOfInterface/2
+ 	nodes(2,lastNode+22) = nodes(2,lastNode+1) + distalThicknessOfWeft/2
  	nodes(2,lastNode+23) = nodes(2,lastNode-8)
  	nodes(2,lastNode+24) = nodes(2,lastNode+10)
  	nodes(2,lastNode+25) = nodes(2,lastNode+20)
