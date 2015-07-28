@@ -16,7 +16,7 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
 	integer,parameter :: NumOfElements = 704
 
 	double precision,parameter :: widthOfModel = 8.894963d-3
-	double precision,parameter :: thicknessOfInterface = 0.04d-3
+	double precision,parameter :: thicknessOfInterface = 0.02d-3
 	double precision,parameter :: minThicknessOfMatrix = 0.02d-3
 	double precision,parameter :: ThicknessOfWarp = 0.22d-3
 	double precision,parameter :: distalThicknessOfWeft = 0.04d-3
@@ -509,10 +509,10 @@ subroutine addBlock2TL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfB
 ! x of nodes
 	nodes(1,lastNode+2:lastNode+9) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface*2
 nodes(1,lastNode+1) = nodes(1,lastNode)+(nodes(1,lastNode+2) - nodes(1,lastNode))/2+&
-&(nodes(1,lastNode+2)-nodes(1,lastNode)-widthOfBlock)/3
+&(thicknessOfInterface*2+(widthOfBlock-thicknessOfInterface*2)/2)/3
 	nodes(1,lastNode+11:lastnode+19) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface
 nodes(1,lastNode+10) = nodes(1,lastNode)+(nodes(1,lastNode+2) - nodes(1,lastNode))/2+&
-&(nodes(1,lastNode+2)-nodes(1,lastNode)-widthOfBlock)*2/3
+&(thicknessOfInterface*2+(widthOfBlock-thicknessOfInterface*2)/2)*2/3
 	nodes(1,lastNode+20:lastnode+22) = (widthOfModel/2 + dxC - wC/2) - thicknessOfInterface/2
  	nodes(1,lastNode+23) = nodes(1,lastNode) + widthOfBlock
 	nodes(1,lastNode+24:lastnode+34) = widthOfModel/2 + dxC - wC/2
@@ -533,7 +533,7 @@ nodes(1,lastNode+10) = nodes(1,lastNode)+(nodes(1,lastNode+2) - nodes(1,lastNode
 	nodes(2,lastNode+10) = nodes(2,lastNode+11)/2d0
  	nodes(2,lastNode+18) = nodes(2,lastNode+9)
  	nodes(2,lastNode+19) = nodes(2,lastNode+9) + thicknessOfInterface
- 	nodes(2,lastNode+20) = nodes(2,lastNode+9) - thicknessOfInterface/2
+ 	nodes(2,lastNode+20) = nodes(2,lastNode+9) - distalThicknessOfWeft/2
  	nodes(2,lastNode+21) = nodes(2,lastNode+9)
  	nodes(2,lastNode+22) = nodes(2,lastNode+9) + thicknessOfInterface/2
  	nodes(2,lastNode+23) = 0d0
@@ -987,7 +987,7 @@ subroutine generate_FRP_Model(model,shift)
 	integer,parameter :: NumOfElementsInOnePeriod = 704
 	integer,parameter :: NumOfNodesInOnePeriodX  = 53
 
-	double precision,parameter :: ThicknessOfLamina = 0.6d-3
+	double precision,parameter :: ThicknessOfLamina = 0.54d-3
 	double precision,parameter :: thicknessOfInterlaminar = 0.02d-3
 	double precision,allocatable,dimension(:,:) :: thL,tlL,wL,thC,tlC,wC,dxC,thR,tlR,wR
 
@@ -1012,13 +1012,13 @@ subroutine generate_FRP_Model(model,shift)
 	allocate(thR(NumOfPeriodsX,NumOfPeriodsY))
 	allocate(wR(NumOfPeriodsX,NumOfPeriodsY))
 
-	thL = 0.11d-3
-	thC = 0.11d-3
-	thR = 0.11d-3
-	wL = 3.6526d-3
-!	wC = 3.6526d-3
-	wC = 3.6526d-3
-	wR = 3.6526d-3
+	thL = 0.113d-3
+	thC = 0.113d-3
+	thR = 0.113d-3
+	wL = 4.206d-3
+!	wC = 4.206d-3
+	wC = 4.206d-3
+	wR = 4.206d-3
 	dxC = 0d-3
 
 ! 	thC(1,1) = 0.08d-3
