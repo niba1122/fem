@@ -3,14 +3,12 @@ module hm_module
 	implicit none
 contains
 
-subroutine hm_calc_BE_integral(BE,model,D)
+subroutine hm_calc_BE_integral(BE,model)
 	integer i,j
 	type(struct_model) :: model
-	type(struct_data) :: data(1)
 	integer dim,n_nds_1el,n_nds,n_els
 	integer,pointer :: elements(:,:)
 	double precision,allocatable :: BE_el(:,:),BE(:,:)
-	double precision,pointer,optional :: D(:,:,:)
 	dim = model%dim
 	n_nds_1el = model%n_nds_1el
 	n_nds = model%n_nds
@@ -20,65 +18,43 @@ subroutine hm_calc_BE_integral(BE,model,D)
 	allocate(BE(dim*n_nds,dim*(dim+1)/2))
 	allocate(BE_el(dim*n_nds_1el,dim*(dim+1)/2))
 
-	if (present(D)) then
-		data(1)%d => D
-	end if
-
 	BE = 0d0
 	do i=1,n_els
 		BE_el = 0d0
-		if (present(D)) then
-  			call calc_element_integral(BE_el,model,i,hm_calc_BE,data)
-		else
-  			call calc_element_integral(BE_el,model,i,hm_calc_BE)
-  		end if
-! if (i<5) then
-!   		print *,i,"th BE:"
-!   		print *,BE_el
-!   end if
-  		do j=1,n_nds_1el
-!   			print *,elements(j,i),"     ",(elements(j,i)-1)*dim+1,":",elements(j,i)*dim
-  			BE((elements(j,i)-1)*dim+1:elements(j,i)*dim,:) = &
-  				BE((elements(j,i)-1)*dim+1:elements(j,i)*dim,:) + BE_el((j-1)*dim+1:j*dim,:)
-  		end do
+  	call calc_element_integral(BE_el,model,i,hm_calc_BE)
+  	do j=1,n_nds_1el
+  		BE((elements(j,i)-1)*dim+1:elements(j,i)*dim,:) = &
+  			BE((elements(j,i)-1)*dim+1:elements(j,i)*dim,:) + BE_el((j-1)*dim+1:j*dim,:)
   	end do
+  end do
 end subroutine
 
-function hm_calc_BE(model,i_el,coord,data)
+function hm_calc_BE(model,i_el,coord)
 		type(struct_model) :: model
 		integer i_el,dim,n_nds_1el
 		double precision coord(:)
-		type(struct_data),optional :: data(:)
 		double precision,allocatable :: hm_calc_BE(:,:),B(:,:),D(:,:)
 		double precision,pointer :: D_(:,:)
 
 		dim = model%dim
 		n_nds_1el = model%n_nds_1el
 
-		if (present(data)) then
-			D_ => data(1)%d(:,:,i_el)
-		else
-			D_ => model%materials(:,:,model%material_nos(i_el))
-		end if
+		D_ => model%materials(:,:,model%material_nos(i_el))
 
 		allocate(hm_calc_BE(dim*n_nds_1el,dim*(dim+1)/2))
 		call calc_B(B,model,i_el,coord)
 		call calc_D(D,model,D_)
-! print *,"B:"
-! print *,B
 		hm_calc_BE(:,:) = matmul(transpose(B),D)
 
 end function
 
 
-subroutine hm_calc_EB_integral(EB,model,D)
+subroutine hm_calc_EB_integral(EB,model)
 	integer i,j
 	type(struct_model) :: model
-	type(struct_data) :: data(1)
 	integer dim,n_nds_1el,n_nds,n_els
 	integer,pointer :: elements(:,:)
 	double precision,allocatable :: EB_el(:,:),EB(:,:)
-	double precision,pointer,optional :: D(:,:,:)
 	dim = model%dim
 	n_nds_1el = model%n_nds_1el
 	n_nds = model%n_nds
@@ -89,43 +65,30 @@ subroutine hm_calc_EB_integral(EB,model,D)
 	allocate(EB(dim*(dim+1)/2,dim*n_nds))
 	allocate(EB_el(dim*(dim+1)/2,dim*n_nds_1el))
 
-	if (present(D)) then
-		data(1)%d => D
-	end if
-
 	EB = 0d0
 	do i=1,n_els
 
-		if (present(D)) then
-  			call calc_element_integral(EB_el,model,i,hm_calc_EB,data)
-		else
-  			call calc_element_integral(EB_el,model,i,hm_calc_EB)
-  		end if
+  	call calc_element_integral(EB_el,model,i,hm_calc_EB)
 
-  		do j=1,n_nds_1el
-  			EB(:,(elements(j,i)-1)*dim+1:elements(j,i)*dim) = &
-  				EB(:,(elements(j,i)-1)*dim+1:elements(j,i)*dim) + EB_el(:,(j-1)*dim+1:j*dim)
-  		end do
+  	do j=1,n_nds_1el
+  		EB(:,(elements(j,i)-1)*dim+1:elements(j,i)*dim) = &
+  			EB(:,(elements(j,i)-1)*dim+1:elements(j,i)*dim) + EB_el(:,(j-1)*dim+1:j*dim)
   	end do
+  end do
 end subroutine
 
 
-function hm_calc_EB(model,i_el,coord,data)
+function hm_calc_EB(model,i_el,coord)
 		type(struct_model) :: model
 		integer i_el,dim,n_nds_1el
 		double precision coord(:)
-		type(struct_data),optional :: data(:)
 		double precision,allocatable :: hm_calc_EB(:,:),B(:,:),D(:,:)
 		double precision,pointer :: D_(:,:)
 
 		dim = model%dim
 		n_nds_1el = model%n_nds_1el
 
-		if (present(data)) then
-			D_ => data(1)%d(:,:,i_el)
-		else
-			D_ => model%materials(:,:,model%material_nos(i_el))
-		end if
+		D_ => model%materials(:,:,model%material_nos(i_el))
 
 		allocate(hm_calc_EB(dim*(dim+1)/2,dim*n_nds_1el))
 		call calc_B(B,model,i_el,coord)
@@ -135,13 +98,11 @@ function hm_calc_EB(model,i_el,coord,data)
 
 end function
 
-subroutine hm_calc_E_integral(E,model,D)
+subroutine hm_calc_E_integral(E,model)
 	integer i,j
 	type(struct_model) :: model
-	type(struct_data) :: data(1)
 	integer dim,n_els
 	double precision,allocatable :: E_el(:,:),E(:,:)
-	double precision,pointer,optional :: D(:,:,:)
 	dim = model%dim
 	n_els = model%n_els
 
@@ -149,37 +110,25 @@ subroutine hm_calc_E_integral(E,model,D)
 	allocate(E(dim*(dim+1)/2,dim*(dim+1)/2))
 	allocate(E_el(dim*(dim+1)/2,dim*(dim+1)/2))
 
-	if (present(D)) then
-		data(1)%d => D
-	end if
 
 	E = 0d0
 	do i=1,n_els
-		if (present(D)) then
-  			call calc_element_integral(E_el,model,i,hm_calc_E,data)
-  		else
-  			call calc_element_integral(E_el,model,i,hm_calc_E)
-  		end if
-  		E = E + E_el
-  	end do
+  	call calc_element_integral(E_el,model,i,hm_calc_E)
+  	E = E + E_el
+  end do
 
 end subroutine
 
-function hm_calc_E(model,i_el,coord,data)
+function hm_calc_E(model,i_el,coord)
 		type(struct_model) :: model
 		integer i_el,dim
 		double precision coord(:)
-		type(struct_data),optional :: data(:)
 		double precision,allocatable :: hm_calc_E(:,:),D(:,:)
 		double precision,pointer :: D_(:,:)
 
 		dim = model%dim
 
-		if (present(data)) then
-			D_ => data(1)%d(:,:,i_el)
-		else
-			D_ => model%materials(:,:,model%material_nos(i_el))
-		end if
+		D_ => model%materials(:,:,model%material_nos(i_el))
 
 		allocate(hm_calc_E(dim*(dim+1)/2,dim*(dim+1)/2))
 		call calc_D(D,model,D_)

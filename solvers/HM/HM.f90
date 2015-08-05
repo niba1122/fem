@@ -65,17 +65,12 @@ program fem
 
 	call init_addition_matrix_sln(k,index_k_diag,model,bc)
 
-! 	call calc_addition_matrix_sln(k,model,index_k_diag,calc_BDB)
 
 	print *,"Solving stiffness equation..."; print *
 
-   	allocate(x(model%n_nds*model%dim,model%dim*(model%dim+1)/2))
-!    	allocate(model%d_data(model%n_nds*model%dim,model%dim*(model%dim+1)/2,1,1))
-
-!    	x => model%d_data(:,:,1,
+  allocate(x(model%n_nds*model%dim,model%dim*(model%dim+1)/2))
 
 	do i=1,dim*(dim+1)/2
-! 		call init_addition_matrix_sln(k,index_k_diag,model)
 		k = 0d0
 		call calc_addition_matrix_sln(k,model,index_k_diag,calc_BDB)
 		call set_cc(k,BE(:,i),model,bc,index_k_diag)
