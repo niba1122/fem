@@ -9,7 +9,7 @@
 
 program fem
   use fem_module
-  use FRPGenerate_module
+  use frp_generate_module
   implicit none
   integer i,step,max_step,model_no
   character(8) :: i_char,step_char
@@ -46,7 +46,6 @@ program fem
   model_no = 1
   max_step = 20
   od_model_name = "gfrp_damage"
-
 
 !-------------------------------------------------------------------------------------------------------
 !  Solver

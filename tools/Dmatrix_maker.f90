@@ -34,7 +34,8 @@ program D_matrix_maker
 
 	open(10,file='D.csv')
 		do i=1,6
-			write(10,'(f30.15,5(",",f30.15))') D(i,:)
+			write(10,'(E21.15e2,6(",",E21.15e2))') D(i,:)
+!			write(10,'(E9.3e2,6(",",E9.3e2))') D(i,:)
 		end do
 	close(10)
 

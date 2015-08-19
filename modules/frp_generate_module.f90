@@ -1,5 +1,3 @@
-module GFRPMeshGenerator2D
-
 contains
 subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,shift)
 	implicit none
@@ -26,6 +24,7 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
 
 	integer,dimension(53) :: bottomNodes,topNodes
 	double precision,allocatable,dimension(:,:) :: shiftedNodes
+  integer,allocatable,dimension(:,:) :: shiftedElements
 	integer,intent(in) :: shift
 
 	double precision :: thL,tlL,wL,thC,tlC,wC,dxC,thR,tlR,wR
@@ -34,6 +33,7 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
 	deallocate(nodes)
 	allocate(nodes(dim,NumOfNodes))
 	allocate(shiftedNodes(dim,NumOfNodes))
+  allocate(shiftedElements(5,NumOfElements))
 
 	tlL = thicknessOfWeft - thL
 	tlC = thicknessOfWeft - thC
@@ -169,13 +169,21 @@ print *,NumOfNodes-bottomNodes(shift+1)+2,":",NumOfNodes,",",topNodes(1)+1,":",t
 	nodes(:,:) = shiftedNodes(:,1:NumOfNodes)
 
 
+  j = 0
 	do i=1,NumOfElements
 		if (elements(1,i) < bottomNodes(shift+1)) then
 			elements(1:4,i) = elements(1:4,i)+NumOfNodes-topNodes(shift+1)
+      j = j+1
 		else
 			elements(1:4,i) = elements(1:4,i)-bottomNodes(shift+1)+1
 		end if
 	end do
+  
+  
+  shiftedElements(:,(NumOfElements-j+1):NumOfElements) = elements(:,1:j)
+  shiftedElements(:,1:(NumOfElements-j)) = elements(:,(j+1):NumOfElements)
+
+  elements(:,:) = shiftedElements(:,:)
 
 ! 	do i=1,NumOfElements
 ! 		if (elements(1,i) < bottomNodes(shift+1)) then 
@@ -959,7 +967,7 @@ end subroutine
 end module GFRPMeshGenerator2D
 
 
-module FRPGenerate_module
+module frp_generate_module
 
 !
 ! made by PeriodicMeshGenerator1.3 and GFRPMeshGenerator2D1.1
@@ -1377,6 +1385,94 @@ K=1
 
 
 
+
+end subroutine
+
+! Vfのパラメータ値をセット
+!subroutine set_vf_params(model,n_periods_x,n_periods_y,shift,mat_no_warp,mat_no_weft)
+subroutine set_vf_params(model,n_periods_x,n_periods_y,shift)
+  use fem_module
+  implicit none
+  type(struct_model) :: model
+!  integer :: shift(:),mat_no_warp(:,:),mat_no_weft(:,:)
+integer :: shift(:)
+integer mat_no_warp(4,4),mat_no_weft(4,4)
+  integer n_els_1period,n_els_1period_x_weft,n_els_1period_x_warp,n_periods_x,n_periods_y,n_els_1lamina,param_no
+  integer block_no,cnt_warp,cnt_weft,warp_no,mat_no_1weft,vfmicro_no
+  integer n_els
+  integer,allocatable :: offset_warp(:),offset_weft(:)
+  integer shift2cnm_warp(52),shift2cnm_weft(52)
+  integer i,j
+  integer,pointer :: material_nos(:)
+mat_no_warp = 0
+
+shift2cnm_warp(1:14) = (/0,1,2,3,4,5,6,7,8,9,10,11,12,15/)*2
+shift2cnm_warp(15:27) = (/18,19,20,21,22,23,24,25,26,27,28,29,30/)*2
+shift2cnm_warp(28:52) = shift2cnm_warp(2:26)+60
+
+shift2cnm_weft(1:14) = (/0,1,2,3,4,5,6,7,8,9,10,11,12,12/)*2
+shift2cnm_weft(15:27) = (/12,13,14,15,16,17,18,19,20,21,22,23,24/)*2
+shift2cnm_weft(28:52) = shift2cnm_weft(2:26)+48
+
+  n_els_1period_x_warp = 120
+  n_els_1period_x_weft = 96
+
+  n_els_1period = 704
+  n_els_1lamina = n_els_1period*n_periods_x
+  warp_no = 2
+  !weft_no = 3
+
+  n_els = model%n_els
+
+  material_nos => model%material_nos
+
+
+  allocate(offset_warp(size(shift)))
+  do i=1,size(shift)
+    offset_warp(i) = n_els_1period_x_warp/2 - mod((n_els_1period_x_warp/4+shift2cnm_warp(shift(i)+1)),n_els_1period_x_warp/2)
+  end do
+  allocate(offset_weft(size(shift)))
+  do i=1,size(shift)
+    offset_weft(i) = n_els_1period_x_weft/2 - mod((n_els_1period_x_weft/4+shift2cnm_weft(shift(i)+1)),n_els_1period_x_weft/2)
+  end do
+
+
+  do i=1,n_periods_y
+    cnt_warp = 1
+    cnt_weft = 1
+    block_no = 0
+    do j=1,n_els_1lamina
+      if (material_nos((i-1)*n_els_1lamina+j) == 2) then
+        param_no = ((cnt_warp-offset_warp(i) + n_els_1period_x_warp/2-1)/(n_els_1period_x_warp/2))+1
+        if (param_no > 2*n_periods_x) then
+          param_no = 1
+        end if
+        vfmicro_no = mod(cnt_warp,2)
+
+        material_nos((i-1)*n_els_1lamina+j) = vfmicro_no+param_no*10+100
+        cnt_warp = cnt_warp + 1
+      else if (material_nos((i-1)*n_els_1lamina+j) == 3) then
+        param_no = ((cnt_weft-offset_weft(i) + n_els_1period_x_weft/2-1)/(n_els_1period_x_weft/2))+1
+        if (param_no > 2*n_periods_x) then
+          param_no = 1
+        end if
+
+        mat_no_1weft = mod( (cnt_weft + n_els_1period_x_weft/2 - offset_weft(i)),n_els_1period_x_weft/2)
+        if (mat_no_1weft == 0) then
+          mat_no_1weft = n_els_1period_x_weft/2
+        end if
+
+        vfmicro_no = ((mat_no_1weft-1)/4+1)*2
+        if ((mod(mat_no_1weft,4) == 1) .or. (mod(mat_no_1weft,4) == 3)) then
+          vfmicro_no = vfmicro_no - 1
+        end if
+        
+        !material_nos((i-1)*n_els_1lamina+j) = 20+vfmicro_no
+        material_nos((i-1)*n_els_1lamina+j) = 20+param_no
+        cnt_weft = cnt_weft + 1
+      end if 
+    end do 
+  end do
 
 end subroutine
 
