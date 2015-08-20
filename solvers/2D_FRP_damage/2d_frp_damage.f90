@@ -23,6 +23,15 @@ program fem
   real(8) f_left, f_right ! 反力の合計(左右)
   real(8) :: max_sig(6,4) ! 損傷の閾値
   real(8) :: vf !繊維束の体積含有率
+
+  integer n_periods_x,n_periods_y,n_areas_1weft
+  real(8),allocatable :: vf_warp(:,:),vf_weft(:,:,:)
+  integer,allocatable :: mat_no_warp(:,:),mat_no_weft(:,:,:)
+
+  real(8) sd_vf_meso,exp_vf_meso,min_vf_meso,max_vf_meso,&
+    &sd_vf_micro,exp_vf_micro,min_vf_micro,max_vf_micro,vf_min,vf_max,vf_interval
+  integer mat_no_offset_warp,mat_no_offset_weft,mat_no_offset
+
   integer,allocatable,dimension(:) :: index_k_diag
   double precision thickness
 
@@ -47,6 +56,37 @@ program fem
   max_step = 20
   od_model_name = "gfrp_damage"
 
+  n_periods_x = 2
+  n_periods_y = 4
+  n_areas_1weft = 24
+
+
+  sd_vf_meso = 0d0
+  exp_vf_meso = 0.6d0
+  min_vf_meso = 0.6d0
+  max_vf_meso = 0.6d0
+  sd_vf_micro = 0.173723d0
+  exp_vf_micro = 1d0
+  min_vf_micro = 1-0.37076d0
+  max_vf_micro = 1+0.288101d0
+  vf_interval = 0.01d0
+
+  mat_no_offset = 5
+
+
+  vf_min = min_vf_meso*min_vf_micro
+  vf_max = max_vf_meso*max_vf_micro
+print *,vf_min,vf_max
+
+  allocate(mat_no_warp(n_periods_x*4,n_periods_y))
+  allocate(mat_no_weft(n_areas_1weft,n_periods_x*2,n_periods_y))
+  allocate(vf_warp(n_periods_x*4,n_periods_y))
+  allocate(vf_weft(n_areas_1weft,n_periods_x*2,n_periods_y))
+  mat_no_warp = 0
+  mat_no_weft = 0
+  vf_warp = 0d0
+  vf_weft = 0d0
+  
 !-------------------------------------------------------------------------------------------------------
 !  Solver
 !-------------------------------------------------------------------------------------------------------
@@ -78,6 +118,12 @@ print *,"mkdir "//trim(path_model)//trim(od_model_name)
 
   vf = 0.6d0+normal_rand_real8(0.033d0)
   print *,'vf = ',vf
+
+  call calc_vf_mat_no(mat_no_warp,mat_no_weft,mat_no_offset_warp,mat_no_offset_weft,&
+    &vf_warp,vf_weft,vf_min,vf_max,vf_interval,n_periods_x,n_periods_y,n_areas_1weft,mat_no_offset)
+!print *,vf_min,vf_max
+!print *,mat_no_warp,mat_no_weft
+
   call calc_strength(max_sig,vf)
 
 !  max_sig = 1d30
@@ -92,7 +138,7 @@ print *,"mkdir "//trim(path_model)//trim(od_model_name)
 !  max_sig(6,3) = 40.2*1d6
 
 
-  call generate_FRP_Model(model,shift)
+  call generate_FRP_Model(model,n_periods_x,n_periods_y,shift)
 
   model%name = od_model_name
 
@@ -896,6 +942,45 @@ subroutine od_output_inp(model,output,file_name)
   end if
 
   call make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name)
+
+end subroutine
+
+subroutine calc_vf_mat_no(mat_no_warp,mat_no_weft,mat_no_offset_warp,mat_no_offset_weft,&
+    &vf_warp,vf_weft,vf_min,vf_max,vf_interval,n_periods_x,n_periods_y,n_areas_1weft,mat_no_offset)
+  real(8) vf_min,vf_max,vf_interval
+  real(8) vf_warp(:,:),vf_weft(:,:,:)
+  integer i,j,k
+  integer n_periods_x,n_periods_y,mat_no_offset_warp,mat_no_offset_weft,mat_no_offset,n_areas_1weft
+  integer mat_no_warp(:,:), mat_no_weft(:,:,:)
+
+  mat_no_offset_warp = mat_no_offset
+  mat_no_offset_weft = mat_no_offset+floor(vf_max/vf_interval)-floor(vf_min/vf_interval)
+
+  ! warp
+  do i=1,n_periods_y
+    do j=1,n_periods_x*4
+      mat_no_warp(j,i) = nint(vf_warp(j,i)/vf_interval)-ceiling(vf_min/vf_interval)+mat_no_offset_warp
+      if (mat_no_warp(j,i) < mat_no_offset_warp) then
+        mat_no_warp(j,i) = mat_no_offset_warp
+      else if (mat_no_warp(j,i) > floor(vf_max/vf_interval)-ceiling(vf_min/vf_interval)+mat_no_offset_warp) then
+        mat_no_warp(j,i) = floor(vf_max/vf_interval)-ceiling(vf_min/vf_interval)+mat_no_offset_warp
+      end if
+    end do
+  end do
+
+  ! weft
+  do i=1,n_periods_y
+    do j=1,n_periods_x*2
+      do k=1,n_areas_1weft
+        mat_no_weft(k,j,i) = nint(vf_weft(k,j,i)/vf_interval)-ceiling(vf_min/vf_interval)+mat_no_offset_weft
+        if (mat_no_weft(k,j,i) < mat_no_offset_weft) then
+          mat_no_weft(k,j,i) = mat_no_offset_weft
+        else if (mat_no_weft(k,j,i) > floor(vf_max/vf_interval)-ceiling(vf_min/vf_interval)+mat_no_offset_weft) then
+          mat_no_weft(k,j,i) = floor(vf_max/vf_interval)-ceiling(vf_min/vf_interval)+mat_no_offset_weft
+        end if
+      end do
+    end do
+  end do
 
 end subroutine
 

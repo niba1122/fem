@@ -988,7 +988,7 @@ module frp_generate_module
 
 contains
 
-subroutine generate_FRP_Model(model,shift)
+subroutine generate_FRP_Model(model,NumOfPeriodsX,NumOfPeriodsY,shift)
 	use fem_module
 	use GFRPMeshGenerator2D
 	implicit none
@@ -1023,8 +1023,8 @@ subroutine generate_FRP_Model(model,shift)
 	double precision,pointer :: angle(:)
 
 
-	NumOfPeriodsX = 2
-	NumOfPeriodsY = 4
+	!NumOfPeriodsX = 2
+	!NumOfPeriodsY = 4
 
 	allocate(thL(NumOfPeriodsX,NumOfPeriodsY))
 	allocate(wL(NumOfPeriodsX,NumOfPeriodsY))

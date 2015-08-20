@@ -1,4 +1,4 @@
-! weft用の物性値
+! warp用の物性値
 program vfdatabase
   use hm_module
   implicit none
@@ -17,7 +17,7 @@ program vfdatabase
   n_vf = 40
   vf_no_offset = 10
 
-	open(11,file=trim(path_model)//"vfdatabase/materials.csv")
+	open(11,file=trim(path_model)//"vfdatabase2/materials.csv")
   write(11,*) n_vf
 
   do j=1,n_vf
@@ -65,7 +65,7 @@ program vfdatabase
 
     print *, "Outputting results ..."
    	call calc_output(output,model,x(:,1))
-   	call output_inp(model,output,'vfdatabase1')
+   	call output_inp(model,output,'vfdatabase2')
 
     write(11,*) j+vf_no_offset-1
     do i=1,6
@@ -115,7 +115,7 @@ subroutine generate_fiber_unit_cell(model,vf)
   model%n_els = n_els
   model%type_el = 'hexa8'
   model%n_nds_1el = 8
-  model%name = 'vfdatabase'
+  model%name = 'vfdatabase2'
   model%dim = dim
 
 
@@ -141,44 +141,44 @@ subroutine generate_fiber_unit_cell(model,vf)
 
   node_no_1_4(1:25) = (/1,2,3,4,5,10,11,12,13,14,19,20,21,22,23,28,29,30,31,32,37,38,39,40,41/)
   
-  nodes(1:2,node_no_1_4(1)) = (/-0.5d0,-0.5d0/)
-  nodes(1:2,node_no_1_4(2)) = (/-(0.5d0+r/dsqrt(2d0))/2,-0.5d0/)
-  nodes(1:2,node_no_1_4(3)) = (/-r/dsqrt(2d0),-0.5d0/)
-  nodes(1:2,node_no_1_4(4)) = (/-r*sin225,-0.5d0/)
-  nodes(1:2,node_no_1_4(5)) = (/0d0,-0.5d0/)
-  nodes(1:2,node_no_1_4(6)) = (/-0.5d0,-(0.5d0+r/dsqrt(2d0))/2/)
-  nodes(1:2,node_no_1_4(7)) = (/-(0.5d0+r/dsqrt(2d0))/2,-(0.5d0+r/dsqrt(2d0))/2/)
-  nodes(1:2,node_no_1_4(8)) = (/-r/dsqrt(2d0),-(0.5d0+r/dsqrt(2d0))/2/)
-  nodes(1:2,node_no_1_4(9)) = (/-r*sin225,-(0.5d0+r*cos225)/2/)
-  nodes(1:2,node_no_1_4(10)) = (/-0d0,-(0.5d0+r)/2/)
-  nodes(1:2,node_no_1_4(11)) = (/-0.5d0,-r/dsqrt(2d0)/)
-  nodes(1:2,node_no_1_4(12)) = (/-(0.5d0+r/dsqrt(2d0))/2,-r/dsqrt(2d0)/)
-  nodes(1:2,node_no_1_4(13)) = (/-r/dsqrt(2d0),-r/dsqrt(2d0)/)
-  nodes(1:2,node_no_1_4(14)) = (/-r*sin225,-r*cos225/)
-  nodes(1:2,node_no_1_4(15)) = (/0d0,-r/)
-  nodes(1:2,node_no_1_4(16)) = (/-0.5d0,-r*sin225/)
-  nodes(1:2,node_no_1_4(17)) = (/-(0.5d0+r*cos225)/2,-r*sin225/)
-  nodes(1:2,node_no_1_4(18)) = (/-r*cos225,-r*sin225/)
-  nodes(1:2,node_no_1_4(19)) = (/-r*sin225,-r*sin225/)
-  nodes(1:2,node_no_1_4(20)) = (/0d0,-r/2/)
-  nodes(1:2,node_no_1_4(21)) = (/-0.5d0,0d0/)
-  nodes(1:2,node_no_1_4(22)) = (/-(0.5d0+r)/2,0d0/)
-  nodes(1:2,node_no_1_4(23)) = (/-r,0d0/)
-  nodes(1:2,node_no_1_4(24)) = (/-r/2,0d0/)
-  nodes(1:2,node_no_1_4(25)) = (/0d0,0d0/)
+  nodes(2:3,node_no_1_4(1)) = (/-0.5d0,-0.5d0/)
+  nodes(2:3,node_no_1_4(2)) = (/-(0.5d0+r/dsqrt(2d0))/2,-0.5d0/)
+  nodes(2:3,node_no_1_4(3)) = (/-r/dsqrt(2d0),-0.5d0/)
+  nodes(2:3,node_no_1_4(4)) = (/-r*sin225,-0.5d0/)
+  nodes(2:3,node_no_1_4(5)) = (/0d0,-0.5d0/)
+  nodes(2:3,node_no_1_4(6)) = (/-0.5d0,-(0.5d0+r/dsqrt(2d0))/2/)
+  nodes(2:3,node_no_1_4(7)) = (/-(0.5d0+r/dsqrt(2d0))/2,-(0.5d0+r/dsqrt(2d0))/2/)
+  nodes(2:3,node_no_1_4(8)) = (/-r/dsqrt(2d0),-(0.5d0+r/dsqrt(2d0))/2/)
+  nodes(2:3,node_no_1_4(9)) = (/-r*sin225,-(0.5d0+r*cos225)/2/)
+  nodes(2:3,node_no_1_4(10)) = (/-0d0,-(0.5d0+r)/2/)
+  nodes(2:3,node_no_1_4(11)) = (/-0.5d0,-r/dsqrt(2d0)/)
+  nodes(2:3,node_no_1_4(12)) = (/-(0.5d0+r/dsqrt(2d0))/2,-r/dsqrt(2d0)/)
+  nodes(2:3,node_no_1_4(13)) = (/-r/dsqrt(2d0),-r/dsqrt(2d0)/)
+  nodes(2:3,node_no_1_4(14)) = (/-r*sin225,-r*cos225/)
+  nodes(2:3,node_no_1_4(15)) = (/0d0,-r/)
+  nodes(2:3,node_no_1_4(16)) = (/-0.5d0,-r*sin225/)
+  nodes(2:3,node_no_1_4(17)) = (/-(0.5d0+r*cos225)/2,-r*sin225/)
+  nodes(2:3,node_no_1_4(18)) = (/-r*cos225,-r*sin225/)
+  nodes(2:3,node_no_1_4(19)) = (/-r*sin225,-r*sin225/)
+  nodes(2:3,node_no_1_4(20)) = (/0d0,-r/2/)
+  nodes(2:3,node_no_1_4(21)) = (/-0.5d0,0d0/)
+  nodes(2:3,node_no_1_4(22)) = (/-(0.5d0+r)/2,0d0/)
+  nodes(2:3,node_no_1_4(23)) = (/-r,0d0/)
+  nodes(2:3,node_no_1_4(24)) = (/-r/2,0d0/)
+  nodes(2:3,node_no_1_4(25)) = (/0d0,0d0/)
 
   do i=1,25
     ! 左上
-    nodes(1:2,72+mod(node_no_1_4(i),9)*2-node_no_1_4(i)) = (/nodes(1,node_no_1_4(i)),-nodes(2,node_no_1_4(i))/)
+    nodes(2:3,72+mod(node_no_1_4(i),9)*2-node_no_1_4(i)) = (/nodes(2,node_no_1_4(i)),-nodes(3,node_no_1_4(i))/)
     ! 右下
-    nodes(1:2,(10+node_no_1_4(i)/9*18)-node_no_1_4(i)) = (/-nodes(1,node_no_1_4(i)),nodes(2,node_no_1_4(i))/)
+    nodes(2:3,(10+node_no_1_4(i)/9*18)-node_no_1_4(i)) = (/-nodes(2,node_no_1_4(i)),nodes(3,node_no_1_4(i))/)
     ! 右上
-    nodes(1:2,82-node_no_1_4(i)) = -nodes(1:2,node_no_1_4(i))
+    nodes(2:3,82-node_no_1_4(i)) = -nodes(2:3,node_no_1_4(i))
   end do
 
   do i=1,11
-    nodes(1:2,(i-1)*81+1:i*81) = nodes(1:2,1:81)
-    nodes(3,(i-1)*81+1:i*81) = 0.1d0*(i-1)
+    nodes(2:3,(i-1)*81+1:i*81) = nodes(2:3,1:81)
+    nodes(1,(i-1)*81+1:i*81) = 0.1d0*(i-1)
   end do
   
   ! - Generating Material No. -
