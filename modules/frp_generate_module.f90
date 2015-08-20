@@ -1,3 +1,4 @@
+module GFRPMeshGenerator2D
 contains
 subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,shift)
 	implicit none
@@ -86,6 +87,12 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
 		&minThicknessOfMatrix,ThicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
  	print *,"Block2BR was generated"
 
+!  call addBlock3LC(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
+!	  &minThicknessOfMatrix,thicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
+!  call addBlock3LC(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
+!	  &minThicknessOfMatrix,thicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
+! 	print *,"Block3LC was generated"
+
 	call addBlock2TL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
 		&minThicknessOfMatrix,ThicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
  	print *,"Block2TL was generated"
@@ -99,6 +106,12 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
  	call addBlock2TR(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
 		&minThicknessOfMatrix,ThicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
  	print *,"Block2TR was generated"
+
+!  call addBlock3CR(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
+!	  &minThicknessOfMatrix,thicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
+!  call addBlock3CR(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
+!	  &minThicknessOfMatrix,thicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
+! 	print *,"Block3CR was generated"
 
  	call addBlock2BL(nodes,elements,lastNode,lastElement,widthOfModel,widthOfBlock,thicknessOfInterface,&
 		&minThicknessOfMatrix,ThicknessOfWarp,thicknessOfWeft,thL,wL,thC,wC,dxC,thR,wR,distalThicknessOfWeft)
