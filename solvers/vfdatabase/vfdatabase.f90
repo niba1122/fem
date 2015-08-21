@@ -15,7 +15,7 @@ program vfdatabase
   min_vf = 0.38d0
   d_vf = 0.01d0
   n_vf = 40
-  vf_no_offset = 10
+  vf_no_offset = 45
 
 	open(11,file=trim(path_model)//"vfdatabase/materials.csv")
   write(11,*) n_vf
