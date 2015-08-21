@@ -21,7 +21,7 @@ program fem
 !  logical damage_ratio
   real(8) damage_ratio
   real(8) f_left, f_right ! 反力の合計(左右)
-  real(8) :: max_sig(6,4) ! 損傷の閾値
+  real(8),allocatable :: max_sig(:,:) ! 損傷の閾値
   real(8) :: vf !繊維束の体積含有率
 
   integer n_periods_x,n_periods_y,n_areas_1weft
@@ -82,6 +82,7 @@ print *,vf_min,vf_max
   allocate(mat_no_weft(n_areas_1weft,n_periods_x*2,n_periods_y))
   allocate(vf_warp(n_periods_x*4,n_periods_y))
   allocate(vf_weft(n_areas_1weft,n_periods_x*2,n_periods_y))
+  allocate(max_sig(6,mat_no_offset-1+2*( floor(vf_max/vf_interval)-floor(vf_min/vf_interval) )))
   mat_no_warp = 0
   mat_no_weft = 0
   vf_warp = 0d0
@@ -124,7 +125,8 @@ print *,"mkdir "//trim(path_model)//trim(od_model_name)
 !print *,vf_min,vf_max
 !print *,mat_no_warp,mat_no_weft
 
-  call calc_strength(max_sig,vf)
+call calc_strength(max_sig,vf_min,vf_max,vf_interval,mat_no_offset)
+  !call calc_strength(max_sig,vf)
 
 !  max_sig = 1d30
 !
@@ -288,20 +290,29 @@ print *, 'damaged!!! step',step
 
 contains
 
-subroutine calc_strength(max_sig,vf)
-  real(8) :: vf, max_sig(:,:)
-  
+subroutine calc_strength(max_sig,vf_min,vf_max,vf_interval,mat_no_offset)
+  integer i
+  integer mat_no_offset,vf_num
+  real(8) vf_min,vf_max,vf_interval,vf
+  real(8) :: max_sig(:,:)
 
-  max_sig = 1d30
+  vf_num = floor(vf_max/vf_interval) - floor(vf_min/vf_interval)
 
-! 材料2の強度
-  max_sig(1,2) = 1000.3d6+(vf-0.6d0)*100d6 ! I
-  max_sig(2,2) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
-  max_sig(6,2) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! I II
-! 材料3の強度
-  max_sig(2,3) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
-  max_sig(3,3) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! III 
-  max_sig(4,3) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! II III
+  ! warp
+  do i=mat_no_offset,(mat_no_offset+vf_num-1)
+    vf = ceiling(vf_min/vf_interval+(i-mat_no_offset)) * vf_interval
+    max_sig(1,i) = 1000.3d6+(vf-0.6d0)*100d6 ! I
+    max_sig(2,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
+    max_sig(6,i) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! I II
+  end do
+
+  ! weft
+  do i=(mat_no_offset+vf_num),(mat_no_offset+vf_num*2-1)
+    vf = ceiling(vf_min/vf_interval+(i-mat_no_offset-vf_num)) * vf_interval
+    max_sig(2,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
+    max_sig(3,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! III 
+    max_sig(4,i) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! II III
+  end do
 
 end subroutine
 
