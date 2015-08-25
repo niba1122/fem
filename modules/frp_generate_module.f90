@@ -14,7 +14,7 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
 	integer,intent(inout) :: NumOfNodes
 	integer,parameter :: NumOfElements = 704
 
-	double precision,parameter :: widthOfModel = 8.894963d-3
+	double precision,parameter :: widthOfModel = 8.89d-3
 	double precision,parameter :: thicknessOfInterface = 0.02d-3
 	double precision,parameter :: minThicknessOfMatrix = 0.02d-3
 	double precision,parameter :: ThicknessOfWarp = 0.22d-3
@@ -1402,14 +1402,12 @@ K=1
 end subroutine
 
 ! Vfのパラメータ値をセット
-!subroutine set_vf_params(model,n_periods_x,n_periods_y,shift,mat_no_warp,mat_no_weft)
-subroutine set_vf_params(model,n_periods_x,n_periods_y,shift)
+subroutine set_vf_params(model,n_periods_x,n_periods_y,shift,mat_no_warp,mat_no_weft)
+!subroutine set_vf_params(model,n_periods_x,n_periods_y,shift)
   use fem_module
   implicit none
   type(struct_model) :: model
-!  integer :: shift(:),mat_no_warp(:,:),mat_no_weft(:,:)
-integer :: shift(:)
-integer mat_no_warp(4,4),mat_no_weft(4,4)
+  integer :: shift(:),mat_no_warp(:,:),mat_no_weft(:,:,:)
   integer n_els_1period,n_els_1period_x_weft,n_els_1period_x_warp,n_periods_x,n_periods_y,n_els_1lamina,param_no
   integer block_no,cnt_warp,cnt_weft,warp_no,mat_no_1weft,vfmicro_no
   integer n_els
@@ -1417,7 +1415,6 @@ integer mat_no_warp(4,4),mat_no_weft(4,4)
   integer shift2cnm_warp(52),shift2cnm_weft(52)
   integer i,j
   integer,pointer :: material_nos(:)
-mat_no_warp = 0
 
 shift2cnm_warp(1:14) = (/0,1,2,3,4,5,6,7,8,9,10,11,12,15/)*2
 shift2cnm_warp(15:27) = (/18,19,20,21,22,23,24,25,26,27,28,29,30/)*2
@@ -1461,9 +1458,13 @@ shift2cnm_weft(28:52) = shift2cnm_weft(2:26)+48
           param_no = 1
         end if
         vfmicro_no = mod(cnt_warp,2)
+        if (vfmicro_no == 0) then
+          vfmicro_no = 2
+        end if
 
-        material_nos((i-1)*n_els_1lamina+j) = vfmicro_no+param_no*10+100
+        !material_nos((i-1)*n_els_1lamina+j) = vfmicro_no+param_no*10+100
         cnt_warp = cnt_warp + 1
+        material_nos((i-1)*n_els_1lamina+j) = mat_no_warp((param_no-1)*2+vfmicro_no,i)
       else if (material_nos((i-1)*n_els_1lamina+j) == 3) then
         param_no = ((cnt_weft-offset_weft(i) + n_els_1period_x_weft/2-1)/(n_els_1period_x_weft/2))+1
         if (param_no > 2*n_periods_x) then
@@ -1481,7 +1482,9 @@ shift2cnm_weft(28:52) = shift2cnm_weft(2:26)+48
         end if
         
         !material_nos((i-1)*n_els_1lamina+j) = 20+vfmicro_no
-        material_nos((i-1)*n_els_1lamina+j) = 20+param_no
+        material_nos((i-1)*n_els_1lamina+j) = mat_no_weft(vfmicro_no,param_no,i)
+        !material_nos((i-1)*n_els_1lamina+j) = 20+param_no
+        
         cnt_weft = cnt_weft + 1
       end if 
     end do 

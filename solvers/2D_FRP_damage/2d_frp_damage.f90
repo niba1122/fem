@@ -12,6 +12,7 @@ program fem
   use frp_generate_module
   implicit none
   integer i,step,max_step,model_no
+  integer p,q,s,t
   character(8) :: i_char,step_char
   double precision,allocatable,dimension(:) :: k,u,f
   real(8),allocatable,target :: angle(:)
@@ -51,13 +52,13 @@ program fem
 !  Config
 !-------------------------------------------------------------------------------------------------------
 
-  du = 1d-5
-  model_no = 1
-  max_step = 20
+  du = 1d-6
+  model_no = 10
+  max_step = 3
   od_model_name = "gfrp_damage"
 
-  n_periods_x = 2
-  n_periods_y = 4
+  n_periods_x = 1
+  n_periods_y = 1
   n_areas_1weft = 24
 
 
@@ -76,7 +77,6 @@ program fem
 
   vf_min = min_vf_meso*min_vf_micro
   vf_max = max_vf_meso*max_vf_micro
-print *,vf_min,vf_max
 
   allocate(mat_no_warp(n_periods_x*4,n_periods_y))
   allocate(mat_no_weft(n_areas_1weft,n_periods_x*2,n_periods_y))
@@ -117,7 +117,21 @@ print *,"mkdir "//trim(path_model)//trim(od_model_name)
   shift(3) = uniform_rand_integer(0,53)
   shift(4) = uniform_rand_integer(0,53)
 
-  vf = 0.6d0+normal_rand_real8(0.033d0)
+  ! warpのvf
+  do q=1,n_periods_y
+    do p=1,n_periods_x*4
+      vf_warp(p,q) = normal_rand_real8(0.57d0,0.57d0*0.173723d0,0.18d0)
+    end do
+  end do
+
+  ! weftのvf
+  do q=1,n_periods_y
+    do p=1,n_periods_x*2 
+      call normal_rand_vf_micro(vf_weft(:,p,q),0.57d0,0.57d0*0.173723d0,0.18d0)
+    end do
+  end do
+
+  vf = normal_rand_real8(0.6d0,0.033d0)
   print *,'vf = ',vf
 
   call calc_vf_mat_no(mat_no_warp,mat_no_weft,mat_no_offset_warp,mat_no_offset_weft,&
@@ -141,6 +155,9 @@ call calc_strength(max_sig,vf_min,vf_max,vf_interval,mat_no_offset)
 
 
   call generate_FRP_Model(model,n_periods_x,n_periods_y,shift)
+  call read_materials(model)
+  call set_vf_params(model,n_periods_x,n_periods_y,shift,mat_no_warp,mat_no_weft)
+  print *,mat_no_warp
 
   model%name = od_model_name
 
@@ -211,7 +228,7 @@ print *,u_
 
     print *,"Calculating stress and strain..."; print *
 
-    call od_calc_output(output,model,u)
+    call od_calc_output(output,model,u,vf_min,vf_max,vf_interval,mat_no_offset)
 
     print *,"Judging the damage state..."; print *
 
@@ -231,10 +248,10 @@ print *,u_
 !    end if
 
     if (damage_ratio>=1) then
-      damage_ratio = damage_judgment(model,output,max_sig)
+      damage_ratio = damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
 print *,'already damaged'
     else
-      damage_ratio = damage_judgment(model,output,max_sig)
+      damage_ratio = damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
       if (damage_ratio>=1) then
         write(11,'(i0,7(",",d30.15),5(",",i0))') &
           &i, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3),&
@@ -249,7 +266,7 @@ print *, 'damaged!!! step',step
     print *,"Outputting file..."; print *
 
     write(output_file_name,'(a,i0)') "step", step
-     call od_output_inp(model,output,trim(od_data_path)//output_file_name)
+     call od_output_inp(model,output,trim(od_data_path)//output_file_name,vf_min,vf_max,vf_interval,mat_no_offset,max_sig)
 
 
     print *,"Clearing data..."; print *
@@ -291,6 +308,7 @@ print *, 'damaged!!! step',step
 contains
 
 subroutine calc_strength(max_sig,vf_min,vf_max,vf_interval,mat_no_offset)
+  implicit none
   integer i
   integer mat_no_offset,vf_num
   real(8) vf_min,vf_max,vf_interval,vf
@@ -301,17 +319,23 @@ subroutine calc_strength(max_sig,vf_min,vf_max,vf_interval,mat_no_offset)
   ! warp
   do i=mat_no_offset,(mat_no_offset+vf_num-1)
     vf = ceiling(vf_min/vf_interval+(i-mat_no_offset)) * vf_interval
-    max_sig(1,i) = 1000.3d6+(vf-0.6d0)*100d6 ! I
-    max_sig(2,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
-    max_sig(6,i) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! I II
+!    max_sig(1,i) = 1000.3d6+(vf-0.6d0)*100d6 ! I
+!    max_sig(2,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
+!    max_sig(6,i) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! I II
+    max_sig(1,i) = 1000.3d6/0.4d0*(1d0-vf)
+    max_sig(2,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
+    max_sig(6,i) = 319.146d6*(1d0-2*dsqrt(vf/pi)) ! II III
   end do
 
   ! weft
   do i=(mat_no_offset+vf_num),(mat_no_offset+vf_num*2-1)
     vf = ceiling(vf_min/vf_interval+(i-mat_no_offset-vf_num)) * vf_interval
-    max_sig(2,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
-    max_sig(3,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! III 
-    max_sig(4,i) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! II III
+!    max_sig(2,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
+!    max_sig(3,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! III 
+!    max_sig(4,i) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! II III
+    max_sig(2,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
+    max_sig(3,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
+    max_sig(4,i) = 319.146d6*(1d0-2*dsqrt(vf/pi)) ! II III
   end do
 
 end subroutine
@@ -344,10 +368,11 @@ subroutine calc_reaction_force(f_left,f_right,model,u)
   end do
 end subroutine
 
-function damage_judgment(model,output,max_sig)
+!function damage_judgment(model,output,max_sig)
+function damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
   type(struct_model) :: model
   type(struct_output) :: output
-  integer n_els,i
+  integer n_els,i,mat_no,mat_no_offset_warp,mat_no_offset_weft
   real(8),pointer :: sig(:,:),angle(:),damage_tensor(:,:)
   real(8) :: max_sig(:,:),sig_rot(6)
   real(8) damage_judgment,damage_ratio ! damage_ratio: sig/maxsig 1以上で損傷発生
@@ -361,50 +386,50 @@ function damage_judgment(model,output,max_sig)
   do i=1,n_els
     sig_rot = rot_sig(sig(:,i),angle(i))
 
-    if (model%material_nos(i) == 2) then ! x:L y:T z:Z
-      if (max_sig(1,2) < sig_rot(1)) then
+    mat_no = model%material_nos(i)
+    if ((mat_no_offset_warp <= mat_no) .and. (mat_no < mat_no_offset_weft)) then ! x=>L y:T z:Z
+      if (max_sig(1,mat_no) < sig_rot(1)) then
         damage_tensor(1,i) = 0.99d0
-      else if (max_sig(2,2) < sig_rot(2)) then
+      else if (max_sig(2,mat_no) < sig_rot(2)) then
         damage_tensor(2,i) = 0.99d0
-      else if (max_sig(6,2) < sig_rot(6)) then
+      else if (max_sig(6,mat_no) < sig_rot(6)) then
         damage_tensor(2,i) = 0.99d0
       end if
 
-
-      damage_ratio = dabs(sig_rot(1)/max_sig(1,2))
+      damage_ratio = dabs(sig_rot(1)/max_sig(1,mat_no))
       if (damage_ratio > damage_judgment) then
         damage_judgment = damage_ratio
       end if
-      damage_ratio = dabs(sig_rot(2)/max_sig(2,2))
+      damage_ratio = dabs(sig_rot(2)/max_sig(2,mat_no))
       if (damage_ratio > damage_judgment) then
         damage_judgment = damage_ratio
       end if
-      damage_ratio = dabs(sig_rot(6)/max_sig(6,2))
+      damage_ratio = dabs(sig_rot(6)/max_sig(6,mat_no))
       if (damage_ratio > damage_judgment) then
         damage_judgment = damage_ratio
       end if
 
 
-    else if (model%material_nos(i) == 3) then ! x:T y:Z z:L
-      if (max_sig(2,3) < sig_rot(1)) then
+    else if (mat_no_offset_weft <= mat_no) then ! x:T y:Z z:L
+      if (max_sig(2,mat_no) < sig_rot(1)) then
         damage_tensor(2,i) = 0.99d0
-      else if (max_sig(3,3) < sig_rot(2)) then
+      else if (max_sig(3,mat_no) < sig_rot(2)) then
         damage_tensor(3,i) = 0.99d0
-      else if (max_sig(4,3) < sig_rot(6)) then
+      else if (max_sig(4,mat_no) < sig_rot(6)) then
         damage_tensor(2,i) = 0.99d0
         damage_tensor(3,i) = 0.99d0
       end if
 
 
-      damage_ratio = dabs(sig_rot(1)/max_sig(2,3))
+      damage_ratio = dabs(sig_rot(1)/max_sig(2,mat_no))
       if (damage_ratio > damage_judgment) then
         damage_judgment = damage_ratio
       end if
-      damage_ratio = dabs(sig_rot(2)/max_sig(3,3))
+      damage_ratio = dabs(sig_rot(2)/max_sig(3,mat_no))
       if (damage_ratio > damage_judgment) then
         damage_judgment = damage_ratio
       end if
-      damage_ratio = dabs(sig_rot(6)/max_sig(4,3))
+      damage_ratio = dabs(sig_rot(6)/max_sig(4,mat_no))
       if (damage_ratio > damage_judgment) then
         damage_judgment = damage_ratio
       end if
@@ -429,25 +454,27 @@ function uniform_rand_integer(min,max)
 end function
 
 
-function normal_rand_real8(sd)
+function normal_rand_real8(ave,sd,arg_limit)
   implicit none
-  real(8) normal_rand_real8,x,y,z,pi,genrand_res53,sd
+  real(8) normal_rand_real8,x,y,z,pi,genrand_res53,ave,sd,limit
+  real(8),optional :: arg_limit
 
   pi = dacos(-1d0)
+
+  if (present(arg_limit)) then
+    limit = arg_limit
+  else
+    limit = 6d0*sd
+  end if
 
   do
     x = genrand_res53()
     y = genrand_res53()
-    z = dsqrt(-2d0*dlog(x)) * dCOS(2*pi*y)
-    if (abs(z)<=6d0) exit
+    z = sd*dsqrt(-2d0*dlog(x)) * dCOS(2*pi*y)
+    if (abs(z)<=limit) exit
   end do
-  if (z>6d0) then
-    z = 6d0
-  else if (z<-6d0) then
-    z = -6d0
-  end if
 
-  normal_rand_real8 = z*sd
+  normal_rand_real8 = z+ave
 end function
 
 
@@ -524,7 +551,7 @@ function od_calc_BDB(model,i_el,coord)
 
   od_calc_BDB = 0d0
 
-  D_3d = od_set_damage_tensor(model,i_el) ! 損傷テンソルをDマトリックスへ適用
+  D_3d = od_set_damage_tensor(model,i_el,vf_min,vf_max,vf_interval,mat_no_offset) ! 損傷テンソルをDマトリックスへ適用
 
   D_3d = rot_D(D_3d,model%data(1)%d(i_el,1,1)) ! Dマトリックスの回転
 
@@ -538,11 +565,32 @@ function od_calc_BDB(model,i_el,coord)
 
 end function
 
-function od_set_damage_tensor(model,i_el)
+!subroutine calc_strength(max_sig,vf_min,vf_max,vf_interval,mat_no_offset)
+!  implicit none
+!  integer i
+!  integer mat_no_offset,vf_num
+!  real(8) vf_min,vf_max,vf_interval,vf
+!  real(8) :: max_sig(:,:)
+!
+!  vf_num = floor(vf_max/vf_interval) - floor(vf_min/vf_interval)
+!  do i=mat_no_offset,(mat_no_offset+vf_num-1)
+!    vf = ceiling(vf_min/vf_interval+(i-mat_no_offset)) * vf_interval
+!    max_sig(1,i) = 1000.3d6+(vf-0.6d0)*100d6 ! I
+!    max_sig(2,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
+!    max_sig(6,i) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! I II
+!  end do
+!
+!  ! weft
+!  do i=(mat_no_offset+vf_num),(mat_no_offset+vf_num*2-1)
+function od_set_damage_tensor(model,i_el,vf_min,vf_max,vf_interval,mat_no_offset)
   type(struct_model) :: model
   real(8) :: dl,dt,dz
   real(8) :: od_set_damage_tensor(6,6)
+  integer mat_no_offset,vf_num,mat_no
+  real(8) vf_min,vf_max,vf_interval,vf
   integer i_el
+
+  vf_num = floor(vf_max/vf_interval) - floor(vf_min/vf_interval)
 
   dl = 1d0-model%data(2)%d(1,i_el,1)
   dt = 1d0-model%data(2)%d(2,i_el,1)
@@ -550,7 +598,9 @@ function od_set_damage_tensor(model,i_el)
 
   od_set_damage_tensor(1:6,1:6) = model%materials(1:6,1:6,model%material_nos(i_el)) 
 
-  if (model%material_nos(i_el) == 2) then
+  mat_no = model%material_nos(i_el)
+  if ((mat_no_offset<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num-1))) then
+!  if (model%material_nos(i_el) == 2) then
     od_set_damage_tensor(1,:) = od_set_damage_tensor(1,:) * dl
     od_set_damage_tensor(2,:) = od_set_damage_tensor(2,:) * dt
     od_set_damage_tensor(3,:) = od_set_damage_tensor(3,:) * dz
@@ -560,7 +610,8 @@ function od_set_damage_tensor(model,i_el)
     od_set_damage_tensor(4,4) = od_set_damage_tensor(4,4) * 4d0 * (dt*dz/(dt+dz))**2
     od_set_damage_tensor(5,5) = od_set_damage_tensor(5,5) * 4d0 * (dz*dl/(dz+dl))**2
     od_set_damage_tensor(6,6) = od_set_damage_tensor(6,6) * 4d0 * (dl*dt/(dl+dt))**2
-  else if (model%material_nos(i_el) == 3) then
+!  else if (model%material_nos(i_el) == 3) then
+  else if (((mat_no_offset+vf_num)<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num*2-1))) then
     od_set_damage_tensor(1,:) = od_set_damage_tensor(1,:) * dt
     od_set_damage_tensor(2,:) = od_set_damage_tensor(2,:) * dz
     od_set_damage_tensor(3,:) = od_set_damage_tensor(3,:) * dl
@@ -777,7 +828,7 @@ function rot_D(D_in,theta)
 end function
 
 
-subroutine od_calc_output(output,model,u)
+subroutine od_calc_output(output,model,u,vf_min,vf_max,vf_interval,mat_no_offset)
   type(struct_model) :: model
   type(struct_output) :: output
   integer i,l,s,t,q
@@ -795,6 +846,9 @@ subroutine od_calc_output(output,model,u)
 
   double precision a,detJ,D_3d(6,6)
   integer gn
+
+  double precision vf_min,vf_max,vf_interval
+  integer mat_no_offset
 
   nn = model%n_nds
   ne = model%n_els
@@ -844,7 +898,7 @@ subroutine od_calc_output(output,model,u)
 !   else
 !     call calc_D(D,model,rot_D(model%materials(:,:,model%material_nos(i_el)),data(2)%d(i_el,1,1)))
 
-    D_3d = od_set_damage_tensor(model,i) ! 損傷テンソルをDマトリックスへ適用
+    D_3d = od_set_damage_tensor(model,i,vf_min,vf_max,vf_interval,mat_no_offset) ! 損傷テンソルをDマトリックスへ適用
 
     D_3d = rot_D(D_3d,model%data(1)%d(i,1,1)) ! Dマトリックスの回転
 
@@ -859,7 +913,7 @@ end subroutine
 
 
 
-subroutine od_output_inp(model,output,file_name)
+subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no_offset,max_sig)
   type(struct_model) :: model
   type(struct_output) :: output
   character(*) file_name
@@ -868,15 +922,20 @@ subroutine od_output_inp(model,output,file_name)
   double precision,allocatable,dimension(:,:) :: el_data
   character(16),allocatable,dimension(:) :: nd_data_name
   character(16),allocatable,dimension(:) :: el_data_name
+  real(8) vf_min,vf_max,vf_interval
+  integer vf_num,mat_no,mat_no_offset
+  integer,allocatable :: tmp_material_nos(:)
+
+  real(8) :: max_sig(:,:)
 
 
   if (model%dim == 2) then
 
   allocate(nd_data(2,model%n_nds))
-  allocate(el_data(17,model%n_els))
+  allocate(el_data(24,model%n_els))
 
   allocate(nd_data_name(2))
-  allocate(el_data_name(17))
+  allocate(el_data_name(24))
 
   nd_data_name = (/"ux","uy"/)
   el_data_name(1) = "epsx"
@@ -896,6 +955,13 @@ subroutine od_output_inp(model,output,file_name)
   el_data_name(15) = 'damage_T'
   el_data_name(16) = 'damage_Z'
   el_data_name(17) = 'angle'
+  el_data_name(18) = 'mat_no'
+  el_data_name(19) = 'max_sig_L'
+  el_data_name(20) = 'max_sig_T'
+  el_data_name(21) = 'max_sig_Z'
+  el_data_name(22) = 'max_sig_TZ'
+  el_data_name(23) = 'max_sig_ZL'
+  el_data_name(24) = 'max_sig_LT'
 
   do i=1,model%n_nds
     nd_data(1,i) = output%u(i*2-1)
@@ -910,8 +976,36 @@ subroutine od_output_inp(model,output,file_name)
   el_data(13,:) = output%maxpsigy(:)
   el_data(14:16,:) = output%data(2)%d(:,:,1) ! 損傷テンソル
   el_data(17,:) = output%data(1)%d(:,1,1) ! 異方性の角度
+  el_data(18,:) = model%material_nos(:) ! 物性値
 
-   else if (model%dim == 3) then
+  el_data(19:24,:) = 0d0
+
+  vf_num = floor(vf_max/vf_interval) - floor(vf_min/vf_interval)
+  allocate(tmp_material_nos(model%n_els))
+  tmp_material_nos(:) = model%material_nos(:)
+  do i=1,model%n_els
+    mat_no = model%material_nos(i)
+    if ((mat_no_offset<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num-1))) then
+      el_data(19,i) = max_sig(1,mat_no)
+      el_data(20,i) = max_sig(2,mat_no)
+      el_data(21,i) = max_sig(3,mat_no)
+      el_data(22,i) = max_sig(4,mat_no)
+      el_data(23,i) = max_sig(5,mat_no)
+      el_data(24,i) = max_sig(6,mat_no)
+      model%material_nos(i) = 2 
+    else if (((mat_no_offset+vf_num)<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num*2-1))) then
+      el_data(19,i) = max_sig(1,mat_no)
+      el_data(20,i) = max_sig(2,mat_no)
+      el_data(21,i) = max_sig(3,mat_no)
+      el_data(22,i) = max_sig(4,mat_no)
+      el_data(23,i) = max_sig(5,mat_no)
+      el_data(24,i) = max_sig(6,mat_no)
+      model%material_nos(i) = 3
+    end if
+  end do
+
+
+  else if (model%dim == 3) then
 
    allocate(nd_data(3,model%n_nds))
   allocate(el_data(16,model%n_els))
@@ -954,6 +1048,10 @@ subroutine od_output_inp(model,output,file_name)
 
   call make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name)
 
+  if (model%dim == 2) then
+    model%material_nos(:) = tmp_material_nos(:)
+  end if
+
 end subroutine
 
 subroutine calc_vf_mat_no(mat_no_warp,mat_no_weft,mat_no_offset_warp,mat_no_offset_weft,&
@@ -992,6 +1090,48 @@ subroutine calc_vf_mat_no(mat_no_warp,mat_no_weft,mat_no_offset_warp,mat_no_offs
       end do
     end do
   end do
+
+end subroutine
+
+subroutine read_materials(model)
+  type(struct_model) :: model
+  real(8),pointer :: materials(:,:,:)
+  integer n_mat,mat_no
+  integer i,j,k
+
+  open(20, file=trim(path_model)//trim(od_model_name)//slash//'mats.csv')
+	read (20,*) n_mat
+
+ 	allocate(model%materials(6,6,n_mat))
+
+  materials => model%materials
+
+	do i=1,n_mat
+		read (20,*) mat_no
+		do j=1,6
+			read (20,*) materials(:,j,mat_no)
+		end do
+	end do
+
+end subroutine
+
+subroutine normal_rand_vf_micro(vf_micro,ave,sd,limit)
+  implicit none
+  integer i,n_params
+  real(8) ave,sd,limit,vf_micro(:)
+  real(8),allocatable :: break(:)
+  n_params = ubound(vf_micro,1)
+
+  allocate(break(n_params))
+
+  do i=1,n_params
+    break(i) = normal_rand_real8(ave,sd/dsqrt(2d0),limit/2d0)
+  end do
+
+  do i=1,n_params-1
+    vf_micro(i) = ave + break(i+1) - break(i)
+  end do
+  vf_micro(n_params) = ave + break(1) - break(n_params)
 
 end subroutine
 
