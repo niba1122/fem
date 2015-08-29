@@ -52,13 +52,13 @@ program fem
 !  Config
 !-------------------------------------------------------------------------------------------------------
 
-  du = 1d-6
-  model_no = 10
-  max_step = 3
+  du = 8.89d-6
+  model_no = 1
+  max_step = 1
   od_model_name = "gfrp_damage"
 
-  n_periods_x = 1
-  n_periods_y = 1
+  n_periods_x = 2
+  n_periods_y = 4
   n_areas_1weft = 24
 
 
@@ -113,21 +113,24 @@ print *,"mkdir "//trim(path_model)//trim(od_model_name)
 
 
   shift(1) = 0
-  shift(2) = uniform_rand_integer(0,53)
-  shift(3) = uniform_rand_integer(0,53)
-  shift(4) = uniform_rand_integer(0,53)
+!  shift(2) = uniform_rand_integer(0,53)
+!  shift(3) = uniform_rand_integer(0,53)
+!  shift(4) = uniform_rand_integer(0,53)
+shift(2) = 19
+shift(3) = 12
+shift(4) = 50
 
   ! warpのvf
   do q=1,n_periods_y
     do p=1,n_periods_x*4
-      vf_warp(p,q) = normal_rand_real8(0.57d0,0.57d0*0.173723d0,0.18d0)
+      vf_warp(p,q) = normal_rand_real8(exp_vf_meso,exp_vf_meso*sd_vf_micro,0.16d0)
     end do
   end do
 
   ! weftのvf
   do q=1,n_periods_y
     do p=1,n_periods_x*2 
-      call normal_rand_vf_micro(vf_weft(:,p,q),0.57d0,0.57d0*0.173723d0,0.18d0)
+      call normal_rand_vf_micro(vf_weft(:,p,q),exp_vf_meso,exp_vf_meso*sd_vf_micro,0.16d0)
     end do
   end do
 
@@ -174,7 +177,6 @@ print *,"mkdir ", trim(path_model), trim(model%name),slash, trim(od_data_path)
   ! モデルごとのデータ出力
   open(20, file=trim(path_model)//trim(model%name)//slash//trim(od_data_path)//'model'//trim(i_char)//'.csv')
   write(20,*) 'f_left,f_right'
-!  damage_ratio = .false.
   damage_ratio = 0d0
   u_ = 0d0
 
@@ -232,20 +234,6 @@ print *,u_
 
     print *,"Judging the damage state..."; print *
 
-!    if (damage_ratio) then
-!      damage_ratio = damage_judgment(model,output,max_sig)
-!print *,'already damage_ratio'
-!    else
-!      damage_ratio = damage_judgment(model,output,max_sig)
-!      if (damage_ratio) then
-!        write(11,'(i0,7(",",d30.15),5(",",i0))') &
-!          &i, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3),&
-!            &shift(1), shift(2), shift(3), shift(4), step
-!print *, 'damage_ratio!!! step',step
-!      else
-!        print *,'undamage_ratio'
-!      end if
-!    end if
 
     if (damage_ratio>=1) then
       damage_ratio = damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
@@ -261,7 +249,6 @@ print *, 'damaged!!! step',step
         print *,'undamaged'
       end if
     end if
-!    call visualize_u(model,u)
 
     print *,"Outputting file..."; print *
 
@@ -664,7 +651,7 @@ function rot_sig(sig,theta)
   do j=1,3
   do k=1,3
   do l=1,3
-    sig_tensor_rot(i,j) = sig_tensor_rot(i,j)+beta(i,k)*beta(j,l)*sig_tensor(i,j);
+    sig_tensor_rot(i,j) = sig_tensor_rot(i,j)+beta(i,k)*beta(j,l)*sig_tensor(k,l);
   end do
   end do
   end do
@@ -925,6 +912,7 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   real(8) vf_min,vf_max,vf_interval
   integer vf_num,mat_no,mat_no_offset
   integer,allocatable :: tmp_material_nos(:)
+  real(8) sig_rot(6)
 
   real(8) :: max_sig(:,:)
 
@@ -932,10 +920,10 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   if (model%dim == 2) then
 
   allocate(nd_data(2,model%n_nds))
-  allocate(el_data(24,model%n_els))
+  allocate(el_data(31,model%n_els))
 
   allocate(nd_data_name(2))
-  allocate(el_data_name(24))
+  allocate(el_data_name(31))
 
   nd_data_name = (/"ux","uy"/)
   el_data_name(1) = "epsx"
@@ -962,6 +950,13 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   el_data_name(22) = 'max_sig_TZ'
   el_data_name(23) = 'max_sig_ZL'
   el_data_name(24) = 'max_sig_LT'
+  el_data_name(25) = 'Vf'
+  el_data_name(26) = 'sigI'
+  el_data_name(27) = 'sigII'
+  el_data_name(28) = 'sigIII'
+  el_data_name(29) = 'sigII III'
+  el_data_name(30) = 'sigIII I'
+  el_data_name(31) = 'sigI II'
 
   do i=1,model%n_nds
     nd_data(1,i) = output%u(i*2-1)
@@ -992,6 +987,10 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
       el_data(22,i) = max_sig(4,mat_no)
       el_data(23,i) = max_sig(5,mat_no)
       el_data(24,i) = max_sig(6,mat_no)
+      el_data(25,i) = vf_interval*(ceiling(vf_min/vf_interval)+model%material_nos(i)-mat_no_offset)
+
+      sig_rot = rot_sig(output%sig(:,i), output%data(1)%d(i,1,1))
+      el_data(26:31,i) = sig_rot
       model%material_nos(i) = 2 
     else if (((mat_no_offset+vf_num)<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num*2-1))) then
       el_data(19,i) = max_sig(1,mat_no)
@@ -1000,6 +999,10 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
       el_data(22,i) = max_sig(4,mat_no)
       el_data(23,i) = max_sig(5,mat_no)
       el_data(24,i) = max_sig(6,mat_no)
+      el_data(25,i) = vf_interval*(ceiling(vf_min/vf_interval)+model%material_nos(i)-mat_no_offset-vf_num)
+
+      sig_rot = rot_sig(output%sig(:,i), output%data(1)%d(i,1,1))
+      el_data(26:31,i) = (/sig_rot(3),sig_rot(1),sig_rot(2),sig_rot(6),sig_rot(4),sig_rot(5)/)
       model%material_nos(i) = 3
     end if
   end do
