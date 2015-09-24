@@ -21,6 +21,7 @@ program fem
   integer damage_ratio_step
 !  logical damage_ratio
   real(8) damage_ratio
+  integer damaged_elem_no,damaged_elem_mat_no
   real(8) f_left, f_right ! 反力の合計(左右)
   real(8),allocatable :: max_sig(:,:) ! 損傷の閾値
   real(8) :: vf !繊維束の体積含有率
@@ -131,6 +132,7 @@ shift = 0
 !  shift(3) = uniform_rand_integer(0,53)
 !  shift(4) = uniform_rand_integer(0,53)
 
+  ! ※材料番号84と44は問題があるのでそれを用いないようにVfのリミットを+-16%に設定
   ! warpのvf
   do q=1,n_periods_y
     do p=1,n_periods_x*4
@@ -267,16 +269,18 @@ print *,u_
 
     ! 損傷判定
     if (damage_ratio>=1) then ! すでに損傷が発生している場合
-      damage_ratio = damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
+      call damage_judgment(damage_ratio,damaged_elem_no,damaged_elem_mat_no,&
+        &model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
 print *,'already damaged'
     else ! まだ損傷していない場合
-      damage_ratio = damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
+      call damage_judgment(damage_ratio,damaged_elem_no,damaged_elem_mat_no,&
+        &model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
       if (damage_ratio>=1) then
 !        write(11,'(i0,7(",",d30.15),5(",",i0))') &
 !          &i, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3),&
 !            &shift(1), shift(2), shift(3), shift(4), step
-        write(11,'(i0,2(",",f30.15))') &
-          &i, u_/damage_ratio, damage_ratio
+        write(11,'(i0,1(",",f30.15),2(",",i0))') &
+          &i, u_/damage_ratio, damaged_elem_no, damaged_elem_mat_no
 print *, 'damaged!!! step',step
 
       else
@@ -394,20 +398,24 @@ subroutine calc_reaction_force(f_left,f_right,model,u)
   end do
 end subroutine
 
-!function damage_judgment(model,output,max_sig)
-function damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
+subroutine damage_judgment(damage_ratio,damaged_elem_no,damaged_elem_mat_no,&
+    &model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
+
   type(struct_model) :: model
   type(struct_output) :: output
   integer n_els,i,mat_no,mat_no_offset_warp,mat_no_offset_weft
   real(8),pointer :: sig(:,:),angle(:),damage_tensor(:,:)
   real(8) :: max_sig(:,:),sig_rot(6)
-  real(8) damage_judgment,damage_ratio ! damage_ratio: sig/maxsig 1以上で損傷発生
+  real(8) damage_ratio,damage_ratio_ ! damage_ratio: sig/maxsig 1以上で損傷発生
+  integer damaged_elem_no,damaged_elem_mat_no
 
   n_els = model%n_els
   angle => model%data(1)%d(:,1,1)
   sig => output%sig
 
   damage_tensor => model%data(2)%d(:,:,1)
+
+  damage_ratio = 0d0
 
   do i=1,n_els
     sig_rot = rot_sig(sig(:,i),angle(i))
@@ -423,17 +431,23 @@ function damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_w
         damage_tensor(2,i) = 0.99d0
       end if
 
-      damage_ratio = dabs(sig_rot(1)/max_sig(1,mat_no))
-      if (damage_ratio > damage_judgment) then
-        damage_judgment = damage_ratio
+      damage_ratio_ = dabs(sig_rot(1)/max_sig(1,mat_no))
+      if (damage_ratio_ > damage_ratio) then
+        damage_ratio = damage_ratio_
+        damaged_elem_no = i
+        damaged_elem_mat_no = 2
       end if
-      damage_ratio = dabs(sig_rot(2)/max_sig(2,mat_no))
-      if (damage_ratio > damage_judgment) then
-        damage_judgment = damage_ratio
+      damage_ratio_ = dabs(sig_rot(2)/max_sig(2,mat_no))
+      if (damage_ratio_ > damage_ratio) then
+        damage_ratio = damage_ratio_
+        damaged_elem_no = i
+        damaged_elem_mat_no = 2
       end if
-      damage_ratio = dabs(sig_rot(6)/max_sig(6,mat_no))
-      if (damage_ratio > damage_judgment) then
-        damage_judgment = damage_ratio
+      damage_ratio_ = dabs(sig_rot(6)/max_sig(6,mat_no))
+      if (damage_ratio_ > damage_ratio) then
+        damage_ratio = damage_ratio_
+        damaged_elem_no = i
+        damaged_elem_mat_no = 2
       end if
 
     ! 横糸
@@ -448,17 +462,23 @@ function damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_w
       end if
 
 
-      damage_ratio = dabs(sig_rot(1)/max_sig(2,mat_no))
-      if (damage_ratio > damage_judgment) then
-        damage_judgment = damage_ratio
+      damage_ratio_ = dabs(sig_rot(1)/max_sig(2,mat_no))
+      if (damage_ratio_ > damage_ratio) then
+        damage_ratio = damage_ratio_
+        damaged_elem_no = i
+        damaged_elem_mat_no = 3
       end if
-      damage_ratio = dabs(sig_rot(2)/max_sig(3,mat_no))
-      if (damage_ratio > damage_judgment) then
-        damage_judgment = damage_ratio
+      damage_ratio_ = dabs(sig_rot(2)/max_sig(3,mat_no))
+      if (damage_ratio_ > damage_ratio) then
+        damage_ratio = damage_ratio_
+        damaged_elem_no = i
+        damaged_elem_mat_no = 3
       end if
-      damage_ratio = dabs(sig_rot(6)/max_sig(4,mat_no))
-      if (damage_ratio > damage_judgment) then
-        damage_judgment = damage_ratio
+      damage_ratio_ = dabs(sig_rot(6)/max_sig(4,mat_no))
+      if (damage_ratio_ > damage_ratio) then
+        damage_ratio = damage_ratio_
+        damaged_elem_no = i
+        damaged_elem_mat_no = 3
       end if
 
 
@@ -466,8 +486,8 @@ function damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_w
 
 
   end do
-print *,"damage_judgment = ", damage_judgment
-end function
+print *,"damage_judgment = ", damage_ratio
+end subroutine
 
 
 function uniform_rand_integer(min,max)
