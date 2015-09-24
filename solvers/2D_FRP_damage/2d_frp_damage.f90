@@ -28,10 +28,12 @@ program fem
   integer n_periods_x,n_periods_y,n_areas_1weft
   real(8),allocatable :: vf_warp(:,:),vf_weft(:,:,:)
   integer,allocatable :: mat_no_warp(:,:),mat_no_weft(:,:,:)
+  integer,allocatable :: focused_elements(:,:,:)
 
   real(8) sd_vf_meso,exp_vf_meso,min_vf_meso,max_vf_meso,&
     &sd_vf_micro,exp_vf_micro,min_vf_micro,max_vf_micro,vf_min,vf_max,vf_interval
   integer mat_no_offset_warp,mat_no_offset_weft,mat_no_offset
+  real(8) sig_rot(6)
 
   integer,allocatable,dimension(:) :: index_k_diag
   double precision thickness
@@ -54,7 +56,7 @@ program fem
 
   du = 8.89d-6
   model_no = 1
-  max_step = 1
+  max_step = 10
   od_model_name = "gfrp_damage"
 
   n_periods_x = 2
@@ -112,13 +114,21 @@ print *,"mkdir "//trim(path_model)//trim(od_model_name)
   write(*,'(a)') " ------------------------------"
 
 
+shift = 0
+
+!  shift(1) = 0
+!  shift(2) = 34
+!  shift(3) = 50
+!  shift(4) = 22
+
   shift(1) = 0
+  shift(2) = 17
+  shift(3) = 50
+  shift(4) = 27
+
 !  shift(2) = uniform_rand_integer(0,53)
 !  shift(3) = uniform_rand_integer(0,53)
 !  shift(4) = uniform_rand_integer(0,53)
-shift(2) = 19
-shift(3) = 12
-shift(4) = 50
 
   ! warpのvf
   do q=1,n_periods_y
@@ -133,6 +143,8 @@ shift(4) = 50
       call normal_rand_vf_micro(vf_weft(:,p,q),exp_vf_meso,exp_vf_meso*sd_vf_micro,0.16d0)
     end do
   end do
+!vf_warp = 0.6d0
+!vf_weft = 0.6d0
 
   vf = normal_rand_real8(0.6d0,0.033d0)
   print *,'vf = ',vf
@@ -157,10 +169,10 @@ call calc_strength(max_sig,vf_min,vf_max,vf_interval,mat_no_offset)
 !  max_sig(6,3) = 40.2*1d6
 
 
-  call generate_FRP_Model(model,n_periods_x,n_periods_y,shift)
+  call generate_FRP_Model(model,focused_elements,n_periods_x,n_periods_y,shift)
   call read_materials(model)
   call set_vf_params(model,n_periods_x,n_periods_y,shift,mat_no_warp,mat_no_weft)
-  print *,mat_no_warp
+!  print *,mat_no_warp
 
   model%name = od_model_name
 
@@ -202,7 +214,9 @@ step = 0
 !    u_ = du*step
 if (step == 2) then
 print *, ceiling(1 / damage_ratio)
-  step = ceiling(1 / damage_ratio)
+  if (ceiling(1 / damage_ratio) > 1) then
+    step = ceiling(1 / damage_ratio)
+  end if
 end if
 u_ = du * step
   
@@ -234,6 +248,21 @@ print *,u_
 
     print *,"Judging the damage state..."; print *
 
+    if (step == 1) then
+      ! 応力集中部の応力を一覧で取得
+      open(21, file=trim(path_model)//trim(model%name)//slash//trim(od_data_path)//&
+                            &'model'//trim(i_char)//'_sigTZ_stress_concentration.csv')
+      do p=1,ubound(focused_elements,1)
+      do q=1,ubound(focused_elements,2)
+      do s=1,ubound(focused_elements,3)
+!        print *,p,q,s,model%data(1)%d(focused_elements(p,q,s),1,1),model%material_nos(focused_elements(p,q,s))
+        sig_rot = rot_sig(output%sig(:,focused_elements(p,q,s)), model%data(1)%d(focused_elements(p,q,s),1,1))
+        write(21,*) dabs(sig_rot(6))
+      end do
+      end do
+      end do
+      close(21)
+    end if
 
     if (damage_ratio>=1) then
       damage_ratio = damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
@@ -241,10 +270,12 @@ print *,'already damaged'
     else
       damage_ratio = damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
       if (damage_ratio>=1) then
-        write(11,'(i0,7(",",d30.15),5(",",i0))') &
-          &i, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3),&
-            &shift(1), shift(2), shift(3), shift(4), step
+!        write(11,'(i0,7(",",d30.15),5(",",i0))') &
+!          &i, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3),&
+!            &shift(1), shift(2), shift(3), shift(4), step
 print *, 'damaged!!! step',step
+
+
       else
         print *,'undamaged'
       end if
@@ -253,7 +284,8 @@ print *, 'damaged!!! step',step
     print *,"Outputting file..."; print *
 
     write(output_file_name,'(a,i0)') "step", step
-     call od_output_inp(model,output,trim(od_data_path)//output_file_name,vf_min,vf_max,vf_interval,mat_no_offset,max_sig)
+     call od_output_inp(model,output,trim(od_data_path)//output_file_name,vf_min,vf_max,vf_interval,mat_no_offset,max_sig,&
+                                                                                                          &focused_elements)
 
 
     print *,"Clearing data..."; print *
@@ -269,6 +301,7 @@ print *, 'damaged!!! step',step
 
   deallocate(f)
   deallocate(u)
+  deallocate(focused_elements)
 
   end do
 
@@ -900,11 +933,11 @@ end subroutine
 
 
 
-subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no_offset,max_sig)
+subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no_offset,max_sig,focused_elements)
   type(struct_model) :: model
   type(struct_output) :: output
   character(*) file_name
-  integer i
+  integer i,j,k
   double precision,allocatable,dimension(:,:) :: nd_data
   double precision,allocatable,dimension(:,:) :: el_data
   character(16),allocatable,dimension(:) :: nd_data_name
@@ -913,6 +946,7 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   integer vf_num,mat_no,mat_no_offset
   integer,allocatable :: tmp_material_nos(:)
   real(8) sig_rot(6)
+  integer :: focused_elements(:,:,:)
 
   real(8) :: max_sig(:,:)
 
@@ -920,10 +954,10 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   if (model%dim == 2) then
 
   allocate(nd_data(2,model%n_nds))
-  allocate(el_data(31,model%n_els))
+  allocate(el_data(32,model%n_els))
 
   allocate(nd_data_name(2))
-  allocate(el_data_name(31))
+  allocate(el_data_name(32))
 
   nd_data_name = (/"ux","uy"/)
   el_data_name(1) = "epsx"
@@ -957,6 +991,7 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   el_data_name(29) = 'sigII III'
   el_data_name(30) = 'sigIII I'
   el_data_name(31) = 'sigI II'
+  el_data_name(32) = 'focused element'
 
   do i=1,model%n_nds
     nd_data(1,i) = output%u(i*2-1)
@@ -1007,6 +1042,16 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
     end if
   end do
 
+  
+  el_data(32,:) = 0d0
+  do i=1,ubound(focused_elements,1)
+  do j=1,ubound(focused_elements,2)
+  do k=1,ubound(focused_elements,3)
+    el_data(32,focused_elements(i,j,k)) = 1d0
+  end do
+  end do
+  end do
+
 
   else if (model%dim == 3) then
 
@@ -1049,7 +1094,7 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
 
   end if
 
-  call make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name)
+  call make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name,10)
 
   if (model%dim == 2) then
     model%material_nos(:) = tmp_material_nos(:)

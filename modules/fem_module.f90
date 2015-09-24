@@ -1335,7 +1335,9 @@ subroutine calc_output(output,model,u,D_)
 
 end subroutine
 
-subroutine output_inp(model,output,file_name)
+subroutine output_inp(model,output,file_name,open_no_)
+  integer,optional :: open_no_
+  integer open_no
 	type(struct_model) :: model
 	type(struct_output) :: output
 	character(*) file_name
@@ -1422,7 +1424,12 @@ subroutine output_inp(model,output,file_name)
 
  	end if
 
- 	call make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name)
+  if (present(open_no_)) then
+    open_no = open_no_
+  else
+    open_no = 10
+  end if
+ 	call make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name,open_no)
 
 end subroutine
 
@@ -1520,7 +1527,7 @@ subroutine calc_sig(output,model,i,D_)
 end subroutine
 
 
-subroutine make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name)
+subroutine make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name,open_no)
 	type(struct_model) :: model
 	integer i
 	double precision,dimension(:,:) :: nd_data,el_data
@@ -1529,7 +1536,7 @@ subroutine make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name)
 	integer,pointer,dimension(:,:) :: e_n
 	integer,pointer,dimension(:) :: material_nos
 
-	integer nn,ne,dim,n_nds_1el,n_nd_data,n_el_data
+	integer nn,ne,dim,n_nds_1el,n_nd_data,n_el_data,open_no
 	integer,allocatable,dimension(:) :: ones_nd,ones_el
 	character*16 type_el_inp
 	character(*) file_name
@@ -1557,44 +1564,43 @@ subroutine make_inp(nd_data,nd_data_name,el_data,el_data_name,model,file_name)
 		type_el_inp = "hex"
 	end if
 
-	open(10, file=trim(path_model)//trim(model%name)//slash//trim(file_name)//'.inp')
+	open(open_no, file=trim(path_model)//trim(model%name)//slash//trim(file_name)//'.inp')
 
-	write (10,*) '1'
-	write (10,*) 'geom'
-	write (10,*) 'step1'
-	write (10,*) nn, ne
+	write (open_no,*) '1'
+	write (open_no,*) 'geom'
+	write (open_no,*) 'step1'
+	write (open_no,*) nn, ne
 
 	do i=1,nn
 		if (dim == 2) then
-			write (10,*) i, nodes(:,i), 0
+			write (open_no,*) i, nodes(:,i), 0
 		else if (dim == 3) then
-			write (10,*) i, nodes(:,i)
+			write (open_no,*) i, nodes(:,i)
 		end if
 	end do
 	do i=1,ne
-		write (10,*) i, material_nos(i), trim(type_el_inp), e_n(1:n_nds_1el,i)
+		write (open_no,*) i, material_nos(i), trim(type_el_inp), e_n(1:n_nds_1el,i)
 	end do
 
-	write (10,*) n_nd_data, n_el_data
-	write (10,*) n_nd_data, ones_nd
+	write (open_no,*) n_nd_data, n_el_data
+	write (open_no,*) n_nd_data, ones_nd
 	do i=1,n_nd_data
-		write (10,*) trim(nd_data_name(i))//","
+		write (open_no,*) trim(nd_data_name(i))//","
 	end do
 	do i=1,nn
-		write (10,*) i, nd_data(:,i)
+		write (open_no,*) i, nd_data(:,i)
 	end do
 
-	write (10,*) n_el_data, ones_el
+	write (open_no,*) n_el_data, ones_el
 	do i=1,n_el_data
-		write (10,*) trim(el_data_name(i))//","
+		write (open_no,*) trim(el_data_name(i))//","
 	end do
 
 	do i=1,ne
-		write (10,*) i, el_data(:,i)
+		write (open_no,*) i, el_data(:,i)
 	end do
 
-	close(10)
-
+	close(open_no)
 
 end subroutine
 

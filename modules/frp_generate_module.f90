@@ -1,12 +1,13 @@
 module GFRPMeshGenerator2D
 contains
-subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,shift)
+subroutine generateGFRPMesh(nodes,elements,NumOfNodes,focusedElements,thL,wL,thC,wC,dxC,thR,wR,shift)
 	implicit none
 	integer i,j,k,p,q
 	integer lastNode
 	integer lastElement
 	double precision,allocatable,dimension(:,:),intent(inout) :: nodes
 	integer,dimension(:,:),intent(inout) :: elements
+  integer :: focusedElements(:)
 
 	integer,parameter :: NumOfNodesInOneElement = 4
 	integer, parameter :: dim = 2;
@@ -42,6 +43,12 @@ subroutine generateGFRPMesh(nodes,elements,NumOfNodes,thL,wL,thC,wC,dxC,thR,wR,s
 
 	nodes = 0d0
 	elements = 0
+  
+
+! 着目する要素を定義
+!  allocate(focusedElements(24))
+  focusedElements(1:12) = (/152,153,163,164,172,173,180,181,189,190,200,201/)
+  focusedElements(13:24) = (/500,501,515,516,524,525,532,533,541,542,556,557/)
 
 
 !-------------------------------------------------------------------------------------------------------
@@ -195,8 +202,16 @@ print *,NumOfNodes-bottomNodes(shift+1)+2,":",NumOfNodes,",",topNodes(1)+1,":",t
   
   shiftedElements(:,(NumOfElements-j+1):NumOfElements) = elements(:,1:j)
   shiftedElements(:,1:(NumOfElements-j)) = elements(:,(j+1):NumOfElements)
-
   elements(:,:) = shiftedElements(:,:)
+
+  do i=1,size(focusedElements)
+    if (focusedElements(i) <= j) then
+      focusedElements(i) = focusedElements(i) + NumOfElements - j
+    else
+      focusedElements(i) = focusedElements(i) - j
+    end if
+  end do
+
 
 ! 	do i=1,NumOfElements
 ! 		if (elements(1,i) < bottomNodes(shift+1)) then 
@@ -988,7 +1003,7 @@ module frp_generate_module
 
 contains
 
-subroutine generate_FRP_Model(model,NumOfPeriodsX,NumOfPeriodsY,shift)
+subroutine generate_FRP_Model(model,focusedElements,NumOfPeriodsX,NumOfPeriodsY,shift)
 	use fem_module
 	use GFRPMeshGenerator2D
 	implicit none
@@ -1008,6 +1023,7 @@ subroutine generate_FRP_Model(model,NumOfPeriodsX,NumOfPeriodsY,shift)
  	integer NumOfNodesInOnePeriod
 	integer,parameter :: NumOfElementsInOnePeriod = 704
 	integer,parameter :: NumOfNodesInOnePeriodX  = 53
+  integer,parameter :: NumOfFocusedElementsInOnePeriod = 24
 
 	double precision,parameter :: ThicknessOfLamina = 0.54d-3
 	double precision,parameter :: thicknessOfInterlaminar = 0.02d-3
@@ -1021,6 +1037,8 @@ subroutine generate_FRP_Model(model,NumOfPeriodsX,NumOfPeriodsY,shift)
 	integer numOfConstraint,NumOfElementsInOneLaminaX
 
 	double precision,pointer :: angle(:)
+
+  integer,allocatable :: focusedElements(:,:,:)
 
 
 	!NumOfPeriodsX = 2
@@ -1061,6 +1079,7 @@ subroutine generate_FRP_Model(model,NumOfPeriodsX,NumOfPeriodsY,shift)
 	allocate(elementsOfLamina(NumOfNodesInOneElement+1,NumOfElementsInOnePeriod*NumOfPeriodsX))
 	allocate(topNodesOfLamina((NumOfNodesInOnePeriodX-1)*NumOfPeriodsX+1,NumOfPeriodsY))
 	allocate(bottomNodesOfLamina((NumOfNodesInOnePeriodX-1)*NumOfPeriodsX+1,NumOfPeriodsY))
+  allocate(focusedElements(NumOfFocusedElementsInOnePeriod,NumOfPeriodsX,NumOfPeriodsY))
 
 	nodes = 0d0
 	nodes_ = 0d0 
@@ -1072,7 +1091,7 @@ subroutine generate_FRP_Model(model,NumOfPeriodsX,NumOfPeriodsY,shift)
 		lastNode_ = lastNode
 
 		! 1周期目の生成
-		call generateGFRPMesh(newNodes,newElements,NumOfNodesInOnePeriod,&
+		call generateGFRPMesh(newNodes,newElements,NumOfNodesInOnePeriod,focusedElements(:,1,k),&
 								&thL(1,k),wL(1,k),thC(1,k),wC(1,k),dxC(1,k),thR(1,k),wR(1,k),shift(k))
 
 		!　y方向の節点数のカウント
@@ -1102,6 +1121,9 @@ subroutine generate_FRP_Model(model,NumOfPeriodsX,NumOfPeriodsY,shift)
 		elements(1:4,lastElement+1:lastElement+NumOfElementsInOnePeriod) = newElements(1:4,:) + lastNode
 		elements(5,lastElement+1:lastElement+NumOfElementsInOnePeriod) = newElements(5,:)
 
+    ! 注目要素の番号にlastNodeの値を加える
+    focusedElements(:,1,k) = focusedElements(:,1,k) + lastElement
+
 		! 最後の節点・要素番号の変数を更新
 		lastNode = lastNode + NumOfNodesInOnePeriod
 		lastElement = lastElement + NumOfElementsInOnePeriod
@@ -1110,7 +1132,7 @@ subroutine generate_FRP_Model(model,NumOfPeriodsX,NumOfPeriodsY,shift)
 		do i=2,NumOfPeriodsX
 			! i周期目の生成
 
-			call generateGFRPMesh(newNodes,newElements,NumOfNodesInOnePeriod,&
+			call generateGFRPMesh(newNodes,newElements,NumOfNodesInOnePeriod,focusedElements(:,i,k),&
 									&thL(i,k),wL(i,k),thC(i,k),wC(i,k),dxC(i,k),thR(i,k),wR(i,k),shift(k))
 
 			! 層内節点の配列にi周期目を追加
@@ -1126,6 +1148,9 @@ subroutine generate_FRP_Model(model,NumOfPeriodsX,NumOfPeriodsY,shift)
 			! 要素の配列にi周期目を追加
 			elements(1:4,lastElement+1:lastElement+NumOfElementsInOnePeriod) = newElements(1:4,:) + lastNode - NumOfNodesInOnePeriodY
 			elements(5,lastElement+1:lastElement+NumOfElementsInOnePeriod) = newElements(5,:)
+
+      ! 注目要素の番号にlastNodeの値を加える
+      focusedElements(:,i,k) = focusedElements(:,i,k) + lastElement
 
 			! 最後の節点・要素番号の変数を更新
 			lastNode = lastNode + NumOfNodesInOnePeriod - NumOfNodesInOnePeriodY
