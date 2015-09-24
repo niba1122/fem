@@ -55,7 +55,7 @@ program fem
 !-------------------------------------------------------------------------------------------------------
 
   du = 8.89d-6
-  model_no = 1
+  model_no = 5
   max_step = 10
   od_model_name = "gfrp_damage"
 
@@ -103,8 +103,9 @@ print *,"mkdir "//trim(path_model)//trim(od_model_name)
   open(11, file=trim(path_model)//trim(od_model_name)//slash//'models.csv')
   write(11,*) 'du, ',du
   write(11,*) 'model_no, ',model_no
-  write(11,*) 'model_no, vf, stress2L, stress2T, stress2TL, stress3T, stress3Z, stress3TZ,&
-    &shift(1),shift(2),shift(3),shift(4), step of initial fraction'
+!  write(11,*) 'model_no, vf, stress2L, stress2T, stress2TL, stress3T, stress3Z, stress3TZ,&
+!    &shift(1),shift(2),shift(3),shift(4), step of initial fraction'
+  write(11,*) 'model_no, u when damaged, damage_ratio'
 
   do i=1,model_no
   write(i_char, '(i0)') i
@@ -214,7 +215,7 @@ step = 0
 !    u_ = du*step
 if (step == 2) then
 print *, ceiling(1 / damage_ratio)
-  if (ceiling(1 / damage_ratio) > 1) then
+  if (ceiling(1 / damage_ratio) > 1) then ! ステップ1で損傷が発生していない場合
     step = ceiling(1 / damage_ratio)
   end if
 end if
@@ -264,17 +265,19 @@ print *,u_
       close(21)
     end if
 
-    if (damage_ratio>=1) then
+    ! 損傷判定
+    if (damage_ratio>=1) then ! すでに損傷が発生している場合
       damage_ratio = damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
 print *,'already damaged'
-    else
+    else ! まだ損傷していない場合
       damage_ratio = damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_weft)
       if (damage_ratio>=1) then
 !        write(11,'(i0,7(",",d30.15),5(",",i0))') &
 !          &i, vf, max_sig(1,2), max_sig(2,2), max_sig(6,2), max_sig(1,3), max_sig(2,3), max_sig(6,3),&
 !            &shift(1), shift(2), shift(3), shift(4), step
+        write(11,'(i0,2(",",f30.15))') &
+          &i, u_/damage_ratio, damage_ratio
 print *, 'damaged!!! step',step
-
 
       else
         print *,'undamaged'
@@ -294,6 +297,9 @@ print *, 'damaged!!! step',step
     call clear_bc(bc)
     call clear_addition_matrix_sln(k,index_k_diag)
 
+    if (damage_ratio >= 1d0) then ! 損傷していたらループを抜ける
+      exit
+    end if
   end do
 
   close(20)
@@ -407,6 +413,7 @@ function damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_w
     sig_rot = rot_sig(sig(:,i),angle(i))
 
     mat_no = model%material_nos(i)
+    ! 縦糸
     if ((mat_no_offset_warp <= mat_no) .and. (mat_no < mat_no_offset_weft)) then ! x=>L y:T z:Z
       if (max_sig(1,mat_no) < sig_rot(1)) then
         damage_tensor(1,i) = 0.99d0
@@ -429,7 +436,7 @@ function damage_judgment(model,output,max_sig,mat_no_offset_warp,mat_no_offset_w
         damage_judgment = damage_ratio
       end if
 
-
+    ! 横糸
     else if (mat_no_offset_weft <= mat_no) then ! x:T y:Z z:L
       if (max_sig(2,mat_no) < sig_rot(1)) then
         damage_tensor(2,i) = 0.99d0

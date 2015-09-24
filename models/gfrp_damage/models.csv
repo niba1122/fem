@@ -1,3 +1,8 @@
  du,    8.8899999999999996E-006
- model_no,            1
- model_no, vf, stress2L, stress2T, stress2TL, stress3T, stress3Z, stress3TZ,shift(1),shift(2),shift(3),shift(4), step of initial fraction
+ model_no,            5
+ model_no, u when damaged, damage_ratio
+1,             0.000004995154518,             1.779724724952563
+2,             0.000003630942743,             2.448399941705214
+3,             0.000005065796391,             1.754906694733863
+4,             0.000006351103358,             1.399756782172791
+5,             0.000005868071551,             1.514978119023357
