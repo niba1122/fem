@@ -106,7 +106,7 @@ print *,"mkdir "//trim(path_model)//trim(od_model_name)
   write(11,*) 'model_no, ',model_no
 !  write(11,*) 'model_no, vf, stress2L, stress2T, stress2TL, stress3T, stress3Z, stress3TZ,&
 !    &shift(1),shift(2),shift(3),shift(4), step of initial fraction'
-  write(11,*) 'model_no, u when damaged, damage_ratio'
+  write(11,*) 'model_no, u when damaged, damaged element No., material No. of damaged element'
 
   do i=1,model_no
   write(i_char, '(i0)') i
