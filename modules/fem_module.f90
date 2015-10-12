@@ -9,35 +9,43 @@ module fem_module
 	type struct_model
 		character type_el*16
 		character name*16
-		double precision,pointer,dimension(:,:) :: nodes
-		integer,pointer,dimension(:,:) :: elements
-		double precision,pointer,dimension(:,:,:) :: materials
-		integer,pointer :: material_nos(:)
+		double precision,pointer,dimension(:,:) :: nodes => null()
+		integer,pointer,dimension(:,:) :: elements => null()
+		double precision,pointer,dimension(:,:,:) :: materials => null()
+		integer,pointer :: material_nos(:) => null()
 		integer n_nds,n_els,dim,n_nds_1el,state2d
 		double precision thickness
-		type(struct_data),pointer :: data(:)
+		type(struct_data),pointer :: data(:) => null()
 
 	end type struct_model
 
 	type struct_data
-		double precision,pointer :: d(:,:,:)
-		integer,pointer :: i(:,:,:)
+		double precision,pointer :: d(:,:,:) => null()
+		integer,pointer :: i(:,:,:) => null()
 	end type
 
 	type struct_bc
 !		nodes_spc,disp_spc,nodes_mpc,dir_mpc
-		integer,pointer,dimension(:,:) :: nodes_spc
-		double precision,pointer,dimension(:,:) :: disp_spc
+		integer,pointer,dimension(:,:) :: nodes_spc => null()
+		double precision,pointer,dimension(:,:) :: disp_spc => null()
 ! 		integer,pointer,dimension(:,:) :: nodes_mpc,dir_mpc
-		integer,pointer :: mpc_master_id(:),mpc_slave_id(:),mpc_master_dir(:),mpc_slave_dir(:)
+		integer,pointer :: mpc_master_id(:)
+    integer,pointer :: mpc_slave_id(:)
+    integer,pointer :: mpc_master_dir(:)
+    integer,pointer :: mpc_slave_dir(:)
 		double precision,pointer :: mpc_param(:)
 		integer n_spc,n_mpc
 ! 		double precision,pointer,dimension(:) :: f
 	end type
 	type struct_output
-		double precision,pointer,dimension(:,:) :: eps,sig
-		double precision,pointer,dimension(:) :: u,msig,maxpsig,maxpsigx,maxpsigy
-		type(struct_data),pointer :: data(:)
+    double precision,pointer,dimension(:,:) :: eps => null()
+    double precision,pointer,dimension(:,:) :: sig => null()
+    double precision,pointer,dimension(:) :: u => null()
+    double precision,pointer,dimension(:) :: msig => null()
+    double precision,pointer,dimension(:) :: maxpsig => null()
+    double precision,pointer,dimension(:) :: maxpsigx => null()
+    double precision,pointer,dimension(:) :: maxpsigy => null()
+		type(struct_data),pointer :: data(:) => null()
 	end type
 contains
 
@@ -216,20 +224,37 @@ end subroutine
 
 subroutine clear_model(model)
  	type(struct_model) :: model
+  integer i
 
 	model%type_el = ''
 	model%name = ''
-	if (associated(model%nodes)) nullify(model%nodes)
-	if (associated(model%nodes)) nullify(model%elements)
-	if (associated(model%materials)) nullify(model%materials)
-	if (associated(model%material_nos)) nullify(model%material_nos)
+	if (associated(model%nodes)) then
+    deallocate(model%nodes)
+  end if
+	if (associated(model%elements)) then
+    deallocate(model%elements)
+  end if
+	if (associated(model%materials)) then
+    deallocate(model%materials)
+  end if
+	if (associated(model%material_nos)) then
+    deallocate(model%material_nos)
+  end if
 	model%n_nds = 0
 	model%n_els = 0
 	model%dim = 0
 	model%n_nds_1el = 0
 	model%state2d = 0
 	model%thickness = 0d0
-	if (associated(model%data)) nullify(model%data)
+	if (associated(model%data)) then
+    do i=1,size(model%data)
+      if (associated(model%data(i)%d)) then
+        deallocate(model%data(i)%d)
+      end if
+      if (associated(model%data(i)%i)) deallocate(model%data(i)%i)
+    end do
+    deallocate(model%data)
+  end if
 end subroutine
 
 subroutine clear_bc(bc)
@@ -249,15 +274,22 @@ end subroutine
 
 subroutine clear_output(output)
 	type(struct_output) :: output
+  integer i
 
-	if (associated(output%eps)) nullify(output%eps)
-	if (associated(output%sig)) nullify(output%sig)
-	if (associated(output%u)) nullify(output%u)
-	if (associated(output%msig)) nullify(output%msig)
-	if (associated(output%maxpsig)) nullify(output%maxpsig)
-	if (associated(output%maxpsigx)) nullify(output%maxpsigx)
-	if (associated(output%maxpsigy)) nullify(output%maxpsigy)
-	if (associated(output%data)) nullify(output%data)
+	if (associated(output%eps)) deallocate(output%eps)
+	if (associated(output%sig)) deallocate(output%sig)
+	if (associated(output%u)) deallocate(output%u)
+	if (associated(output%msig)) deallocate(output%msig)
+	if (associated(output%maxpsig)) deallocate(output%maxpsig)
+	if (associated(output%maxpsigx)) deallocate(output%maxpsigx)
+	if (associated(output%maxpsigy)) deallocate(output%maxpsigy)
+	if (associated(output%data)) then
+    do i=1,size(output%data)
+      if (associated(output%data(i)%d)) deallocate(output%data(i)%d)
+      if (associated(output%data(i)%i)) deallocate(output%data(i)%i)
+    end do
+    deallocate(output%data)
+  end if
 end subroutine
 
 subroutine set_state2d(model,state2d,thickness)
@@ -562,8 +594,8 @@ subroutine calc_addition_matrix_sln(k,model,sln,func,data)
 
 	interface
 !     	function func(model,i_el,coord,data)
-    	function func(model,i_el,coord)
-    		import struct_model,struct_data
+    function func(model,i_el,coord)
+    	import struct_model
 			type(struct_model) :: model
 			integer :: i_el
 			double precision :: coord(:)
