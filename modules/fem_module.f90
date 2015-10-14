@@ -29,11 +29,11 @@ module fem_module
 		integer,pointer,dimension(:,:) :: nodes_spc => null()
 		double precision,pointer,dimension(:,:) :: disp_spc => null()
 ! 		integer,pointer,dimension(:,:) :: nodes_mpc,dir_mpc
-		integer,pointer :: mpc_master_id(:)
-    integer,pointer :: mpc_slave_id(:)
-    integer,pointer :: mpc_master_dir(:)
-    integer,pointer :: mpc_slave_dir(:)
-		double precision,pointer :: mpc_param(:)
+		integer,pointer :: mpc_master_id(:) => null()
+    integer,pointer :: mpc_slave_id(:) => null()
+    integer,pointer :: mpc_master_dir(:) => null()
+    integer,pointer :: mpc_slave_dir(:) => null()
+		double precision,pointer :: mpc_param(:) => null()
 		integer n_spc,n_mpc
 ! 		double precision,pointer,dimension(:) :: f
 	end type
@@ -230,15 +230,19 @@ subroutine clear_model(model)
 	model%name = ''
 	if (associated(model%nodes)) then
     deallocate(model%nodes)
+    nullify(model%nodes)
   end if
 	if (associated(model%elements)) then
     deallocate(model%elements)
+    nullify(model%elements)
   end if
 	if (associated(model%materials)) then
     deallocate(model%materials)
+    nullify(model%materials)
   end if
 	if (associated(model%material_nos)) then
     deallocate(model%material_nos)
+    nullify(model%material_nos)
   end if
 	model%n_nds = 0
 	model%n_els = 0
@@ -250,24 +254,50 @@ subroutine clear_model(model)
     do i=1,size(model%data)
       if (associated(model%data(i)%d)) then
         deallocate(model%data(i)%d)
+        nullify(model%data(i)%d)
       end if
-      if (associated(model%data(i)%i)) deallocate(model%data(i)%i)
+      if (associated(model%data(i)%i)) then
+        deallocate(model%data(i)%i)
+        nullify(model%data(i)%i)
+      end if
     end do
     deallocate(model%data)
+    nullify(model%data)
   end if
 end subroutine
 
 subroutine clear_bc(bc)
 	type(struct_bc) :: bc
 
-	if (associated(bc%nodes_spc)) nullify(bc%nodes_spc)
-	if (associated(bc%disp_spc)) nullify(bc%disp_spc)
-	if (associated(bc%mpc_master_id)) nullify(bc%mpc_master_id)
-	if (associated(bc%mpc_slave_id)) nullify(bc%mpc_slave_id)
-	if (associated(bc%mpc_master_dir)) nullify(bc%mpc_master_dir)
-	if (associated(bc%mpc_slave_dir)) nullify(bc%mpc_slave_dir)
+	if (associated(bc%nodes_spc)) then
+    deallocate(bc%nodes_spc)
+    nullify(bc%nodes_spc)
+  end if
+	if (associated(bc%disp_spc)) then
+    deallocate(bc%disp_spc)
+    nullify(bc%disp_spc)
+  end if
+	if (associated(bc%mpc_master_id)) then
+    deallocate(bc%mpc_master_id)
+    nullify(bc%mpc_master_id)
+  end if
+	if (associated(bc%mpc_slave_id)) then
+    deallocate(bc%mpc_slave_id)
+    nullify(bc%mpc_slave_id)
+  end if
+	if (associated(bc%mpc_master_dir)) then
+    deallocate(bc%mpc_master_dir)
+    nullify(bc%mpc_master_dir)
+  end if
+	if (associated(bc%mpc_slave_dir)) then
+    deallocate(bc%mpc_slave_dir)
+    nullify(bc%mpc_slave_dir)
+  end if
 
-	if (associated(bc%mpc_param)) nullify(bc%mpc_param)
+	if (associated(bc%mpc_param)) then
+    deallocate(bc%mpc_param)
+    nullify(bc%mpc_param)
+  end if
 	bc%n_spc = 0
 	bc%n_mpc = 0
 end subroutine
@@ -276,19 +306,47 @@ subroutine clear_output(output)
 	type(struct_output) :: output
   integer i
 
-	if (associated(output%eps)) deallocate(output%eps)
-	if (associated(output%sig)) deallocate(output%sig)
-	if (associated(output%u)) deallocate(output%u)
-	if (associated(output%msig)) deallocate(output%msig)
-	if (associated(output%maxpsig)) deallocate(output%maxpsig)
-	if (associated(output%maxpsigx)) deallocate(output%maxpsigx)
-	if (associated(output%maxpsigy)) deallocate(output%maxpsigy)
+	if (associated(output%eps)) then
+    deallocate(output%eps)
+    nullify(output%eps)
+  end if
+	if (associated(output%sig)) then
+    deallocate(output%sig)
+    nullify(output%sig)
+  end if
+	if (associated(output%u)) then
+    deallocate(output%u)
+    nullify(output%u)
+  end if
+	if (associated(output%msig)) then
+    deallocate(output%msig)
+    nullify(output%msig)
+  end if
+	if (associated(output%maxpsig)) then
+    deallocate(output%maxpsig)
+    nullify(output%maxpsig)
+  end if
+	if (associated(output%maxpsigx)) then
+    deallocate(output%maxpsigx)
+    nullify(output%maxpsigx)
+  end if
+	if (associated(output%maxpsigy)) then
+    deallocate(output%maxpsigy)
+    nullify(output%maxpsigy)
+  end if
 	if (associated(output%data)) then
     do i=1,size(output%data)
-      if (associated(output%data(i)%d)) deallocate(output%data(i)%d)
-      if (associated(output%data(i)%i)) deallocate(output%data(i)%i)
+      if (associated(output%data(i)%d)) then
+        deallocate(output%data(i)%d)
+        nullify(output%data(i)%d)
+      end if
+      if (associated(output%data(i)%i)) then
+        deallocate(output%data(i)%i)
+        nullify(output%data(i)%i)
+      end if
     end do
     deallocate(output%data)
+    nullify(output%data)
   end if
 end subroutine
 

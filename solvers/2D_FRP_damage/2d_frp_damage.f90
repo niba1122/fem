@@ -926,9 +926,6 @@ subroutine od_calc_output(output,model,u,vf_min,vf_max,vf_interval,mat_no_offset
   output%u(:) = u(:)
 
 
-   allocate(output%data(2))
-   output%data(1)%d => model%data(1)%d ! 異方性の角度
-   output%data(2)%d => model%data(2)%d ! 損傷テンソル
 
   do i=1,ne
     ue = 0d0
@@ -1031,8 +1028,8 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   el_data(11,:) = output%maxpsig(:)
   el_data(12,:) = output%maxpsigx(:)
   el_data(13,:) = output%maxpsigy(:)
-  el_data(14:16,:) = output%data(2)%d(:,:,1) ! 損傷テンソル
-  el_data(17,:) = output%data(1)%d(:,1,1) ! 異方性の角度
+  el_data(14:16,:) = model%data(2)%d(:,:,1) ! 損傷テンソル
+  el_data(17,:) = model%data(1)%d(:,1,1) ! 異方性の角度
   el_data(18,:) = model%material_nos(:) ! 物性値
 
   el_data(19:24,:) = 0d0
@@ -1051,7 +1048,7 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
       el_data(24,i) = max_sig(6,mat_no)
       el_data(25,i) = vf_interval*(ceiling(vf_min/vf_interval)+model%material_nos(i)-mat_no_offset)
 
-      sig_rot = rot_sig(output%sig(:,i), output%data(1)%d(i,1,1))
+      sig_rot = rot_sig(output%sig(:,i), model%data(1)%d(i,1,1))
       el_data(26:31,i) = sig_rot
       model%material_nos(i) = 2 
     else if (((mat_no_offset+vf_num)<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num*2-1))) then
@@ -1063,7 +1060,7 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
       el_data(24,i) = max_sig(6,mat_no)
       el_data(25,i) = vf_interval*(ceiling(vf_min/vf_interval)+model%material_nos(i)-mat_no_offset-vf_num)
 
-      sig_rot = rot_sig(output%sig(:,i), output%data(1)%d(i,1,1))
+      sig_rot = rot_sig(output%sig(:,i), model%data(1)%d(i,1,1))
       el_data(26:31,i) = (/sig_rot(3),sig_rot(1),sig_rot(2),sig_rot(6),sig_rot(4),sig_rot(5)/)
       model%material_nos(i) = 3
     end if
