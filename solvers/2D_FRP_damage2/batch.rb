@@ -8,8 +8,8 @@ print "Generating random parameters"
 N_MODEL.times do |i|
   Open3.popen3("./2d_frp_damage2.out #{i+1}") do |stdin, stdout, stderr, w|
     stdin.close
-    stdout.each do |line| print line end #=> "a\n",  "b\n"
-    stderr.each do |line| print line end #=> "bar\n", "baz\n", "foo\n"
+    stdout.each do |line| print line end
+    stderr.each do |line| print line end
   end
 end
 
