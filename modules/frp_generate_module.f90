@@ -1055,10 +1055,12 @@ subroutine generate_FRP_Model(model,focusedElements,NumOfPeriodsX,NumOfPeriodsY,
 	thL = 0.113d-3
 	thC = 0.113d-3
 	thR = 0.113d-3
-	wL = 4.206d-3
-!	wC = 4.206d-3
-	wC = 4.206d-3
-	wR = 4.206d-3
+	!wL = 4.206d-3
+	!wC = 4.206d-3
+	!wR = 4.206d-3
+	wL = 4.317d-3
+	wC = 4.317d-3
+	wR = 4.317d-3
 	dxC = 0d-3
 
 ! 	thC(1,1) = 0.08d-3

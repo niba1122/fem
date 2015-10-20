@@ -149,16 +149,20 @@ shift = 0
 
 
 ! 外部ファイルからパラメータ値を読み込み
+  !allocate(tmp_params(n_periods_x*4 * n_periods_y + n_areas_1weft * n_periods_x*2 * n_periods_y))
+  !open(22, file=trim(path_model)//trim(model%name)//slash//'params.csv')
+  !read(22,*) n_model
+  !read(22,'()') ! ヘッダを読み飛ばし
+  !do p=1,n_model
+  !  read(22,*) q, tmp_params ! qは使わない
+  !  if (q==i) then
+  !    exit
+  !  end if
+  !end do
+  !close(22)
   allocate(tmp_params(n_periods_x*4 * n_periods_y + n_areas_1weft * n_periods_x*2 * n_periods_y))
-  open(22, file=trim(path_model)//trim(model%name)//slash//'params.csv')
-  read(22,*) n_model
-  read(22,'()') ! ヘッダを読み飛ばし
-  do p=1,n_model
-    read(22,*) q, tmp_params ! qは使わない
-    if (q==i) then
-      exit
-    end if
-  end do
+  open(22, file=trim(path_model)//trim(model%name)//slash//'params'//slash//trim(i_char)//'.csv')
+  read(22,*) tmp_params ! qは使わない
   close(22)
 
   t = 1

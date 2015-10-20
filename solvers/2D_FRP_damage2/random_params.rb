@@ -11,7 +11,8 @@ N_MICROWEFT_1WEFT = 24
 N_MICROWARP_1LAMINA = N_X_PERIODS*4
 N_WEFT_1LAMINA = N_X_PERIODS*2
 
-CSV_PATH = '../../models/gfrp_damage/params.csv'
+ALL_CSV_PATH = '../../models/gfrp_damage/params.csv'
+BASE_CSV_PATH = '../../models/gfrp_damage/params/'
 
 # Classes
 
@@ -81,7 +82,7 @@ N_Y_PERIODS.times do |i|
   end
 end
 
-io = File.open(CSV_PATH,"w")
+io = File.open(ALL_CSV_PATH,"w")
 io.puts N_MODELS
 header = "model No."
 
@@ -105,6 +106,9 @@ p "#{N_Y_PERIODS},#{N_WEFT_1LAMINA},#{N_MICROWEFT_1WEFT}"
 io.puts header
 
 N_MODELS.times do |k|
+  Dir.mkdir(BASE_CSV_PATH) unless Dir.exist? BASE_CSV_PATH
+
+  io_each = File.open(BASE_CSV_PATH+"#{k+1}.csv","w")
 
   vfwarp = prng_vfwarp.map { |pvs| pvs.map { |pv| pv.rand } }
   vfweft = prng_vfweft.map { |pvs| pvs.map { |pv| pv.rand } }
@@ -112,6 +116,7 @@ N_MODELS.times do |k|
   str_vfwarp = vfwarp.map { |pv| pv.join(',') }.join(',')
   str_vfweft = vfweft.map { |pv| pv.map { |pv| pv.join(',') }.join(',') }.join(',')
 
-io.puts "#{k+1},#{str_vfwarp},#{str_vfweft}"
+  io.puts "#{k+1},#{str_vfwarp},#{str_vfweft}"
+  io_each.puts "#{str_vfwarp},#{str_vfweft}"
 
 end

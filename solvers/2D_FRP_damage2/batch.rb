@@ -1,6 +1,6 @@
 require 'open3'
 
-N_MODEL = 5
+N_MODEL = 8
 
 print "Generating random parameters"
 `ruby ./random_params.rb #{N_MODEL}`
