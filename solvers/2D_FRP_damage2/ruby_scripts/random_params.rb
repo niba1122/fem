@@ -11,8 +11,10 @@ N_MICROWEFT_1WEFT = 24
 N_MICROWARP_1LAMINA = N_X_PERIODS*4
 N_WEFT_1LAMINA = N_X_PERIODS*2
 
-ALL_CSV_PATH = '../../models/gfrp_damage/params.csv'
-BASE_CSV_PATH = '../../models/gfrp_damage/params/'
+MODEL_PATH = '../../../models/gfrp_damage'
+ 
+ALL_CSV_PATH = "#{MODEL_PATH}/params.csv"
+BASE_CSV_PATH = "#{MODEL_PATH}/params/"
 
 # Classes
 
