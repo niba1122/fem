@@ -14,7 +14,7 @@ N_WEFT_1LAMINA = N_X_PERIODS*2
 MODEL_PATH = '../../../models/gfrp_damage'
  
 ALL_CSV_PATH = "#{MODEL_PATH}/params.csv"
-BASE_CSV_PATH = "#{MODEL_PATH}/params/"
+BASE_CSV_PATH = "#{MODEL_PATH}/params"
 
 # Classes
 
@@ -110,7 +110,7 @@ io.puts header
 N_MODELS.times do |k|
   Dir.mkdir(BASE_CSV_PATH) unless Dir.exist? BASE_CSV_PATH
 
-  io_each = File.open(BASE_CSV_PATH+"#{k+1}.csv","w")
+  io_each = File.open("#{BASE_CSV_PATH}/#{k+1}.csv","w")
 
   vfwarp = prng_vfwarp.map { |pvs| pvs.map { |pv| pv.rand } }
   vfweft = prng_vfweft.map { |pvs| pvs.map { |pv| pv.rand } }
