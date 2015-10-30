@@ -1,3 +1,5 @@
+require './classes.rb'
+
 # Config
 
 N_X_PERIODS = 2
@@ -18,47 +20,6 @@ BASE_CSV_PATH = "#{MODEL_PATH}/params"
 
 # Classes
 
-class NormRand
-  include Math
-  @@pi = Math.acos(-1)
-  def initialize(seed,exp,sd,limit=nil)
-    @exp = exp
-    @sd = sd
-    @limit = limit || 6.0*sd
-    @prng = Random.new(seed)
-  end
-
-  def rand
-    1000000.times do
-      x = @prng.rand
-      y = @prng.rand
-      z =  sqrt(-2*log(x))*cos(2*@@pi*y) * @sd
-      if z.abs <= @limit
-        return z + @exp 
-      end
-    end
-    rn
-  end
-end
-
-class NormRandVfmicro
-  include Math
-
-  def initialize(seeds,exp,sd,limit=nil)
-    @prngs = seeds.map { |seed| NormRand.new(seed,0.0,sd/sqrt(2.0),limit/2.0) }
-    @exp = exp
-    @n_vfmicro = seeds.length
-  end 
-
-  def rand
-    partitions = @prngs.map do |prng|
-      prng.rand
-    end
-    partitions << partitions[0]
-
-    Array(0...@n_vfmicro).map { |i| @exp + partitions[i+1] - partitions[i] }
-  end
-end
 
 # main
 seed = 10
