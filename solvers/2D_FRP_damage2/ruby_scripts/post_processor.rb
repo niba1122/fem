@@ -3,11 +3,34 @@ require './classes.rb'
 
 # config
 
-N_MODELS = 100
+N_MODELS = 10000
 MODEL_PATH = '../../../models/gfrp_damage'
 
 # main
 
+
+# checking if inp files exist
+n_loss = 0
+
+puts 'checking if inp files exist'
+N_MODELS.times do |i|
+  begin
+    io = File.open("#{MODEL_PATH}/model#{i+1}/step1.inp","r")
+  rescue SystemCallError => e
+    puts i+1
+    n_loss += 1
+  rescue IOError => e
+    puts i+1
+    n_loss += 1
+  end
+end
+
+puts "The number of loss is #{n_loss}"
+if (n_loss > 0)
+  exit
+end
+
+# inp2csv
 models_data = CSV::Table.new([])
 models_data_headers = [:model_no,:damage_ratioT,:damage_rationTZ,:damaged_u]
 
