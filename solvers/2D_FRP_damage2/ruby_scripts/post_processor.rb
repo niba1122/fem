@@ -1,3 +1,13 @@
+#
+#   post_processor.rb
+#   
+#   (c) 2015 Nobuhito Ibaraki
+#
+#
+#   各モデルのMicroAVS用出力ファイルを読み込み
+#   sigT,ST,sigTZ,STZをまとめたCSVファイルを出力する
+#
+
 require 'csv'
 require './classes.rb'
 

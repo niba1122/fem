@@ -1,3 +1,13 @@
+#
+#   batch.rb
+#   
+#   (c) 2015 Nobuhito Ibaraki
+#
+#
+#   乱数生成スクリプト、ソルバーを実行して
+#   モンテカルロシミュレーションを行う。
+#
+
 require 'open3'
 
 N_MODEL = 8

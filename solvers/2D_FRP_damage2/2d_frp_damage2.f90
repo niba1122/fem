@@ -1022,10 +1022,10 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   if (model%dim == 2) then
 
   allocate(nd_data(2,model%n_nds))
-  allocate(el_data(32,model%n_els))
+  allocate(el_data(34,model%n_els))
 
   allocate(nd_data_name(2))
-  allocate(el_data_name(32))
+  allocate(el_data_name(34))
 
   nd_data_name = (/"ux","uy"/)
   el_data_name(1) = "epsx"
@@ -1060,6 +1060,8 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   el_data_name(30) = 'sigIII I'
   el_data_name(31) = 'sigI II'
   el_data_name(32) = 'focused element'
+  el_data_name(33) = 'damage_ratioT'
+  el_data_name(34) = 'damage_ratioTZ'
 
   do i=1,model%n_nds
     nd_data(1,i) = output%u(i*2-1)
@@ -1094,6 +1096,14 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
 
       sig_rot = rot_sig(output%sig(:,i), model%data(1)%d(i,1,1))
       el_data(26:31,i) = sig_rot
+
+      if (el_data(20,i) > 0d0) then
+        el_data(33,i) = dabs(el_data(27,i)/el_data(20,i))
+      end if
+      if (el_data(22,i) > 0d0) then
+        el_data(34,i) = dabs(el_data(29,i)/el_data(22,i))
+      end if
+
       model%material_nos(i) = 2 
     else if (((mat_no_offset+vf_num)<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num*2-1))) then
       el_data(19,i) = max_sig(1,mat_no)
@@ -1106,6 +1116,14 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
 
       sig_rot = rot_sig(output%sig(:,i), model%data(1)%d(i,1,1))
       el_data(26:31,i) = (/sig_rot(3),sig_rot(1),sig_rot(2),sig_rot(6),sig_rot(4),sig_rot(5)/)
+
+      if (el_data(20,i) > 0d0) then
+        el_data(33,i) = dabs(el_data(27,i)/el_data(20,i))
+      end if
+      if (el_data(22,i) > 0d0) then
+        el_data(34,i) = dabs(el_data(29,i)/el_data(22,i))
+      end if
+
       model%material_nos(i) = 3
     end if
   end do

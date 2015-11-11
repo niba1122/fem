@@ -1,3 +1,12 @@
+#
+#   sls.rb
+#   
+#   (c) 2015 Nobuhito Ibaraki
+#
+#
+#   SLS法（Stepwise Limited Sampling method）の収束判定を行うプログラム
+#
+
 require 'csv'
 require './classes.rb'
 

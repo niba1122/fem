@@ -1,3 +1,12 @@
+#
+#   random_params.rb
+#   
+#   (c) 2015 Nobuhito Ibaraki
+#
+#
+#   Vfmicroのパラメータ値をランダムに生成する
+#
+
 require './classes.rb'
 
 # Config

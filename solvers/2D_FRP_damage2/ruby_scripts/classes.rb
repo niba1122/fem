@@ -1,3 +1,14 @@
+#
+#   classes.rb
+#   
+#   (c) 2015 Nobuhito Ibaraki
+#
+#
+#   他のスクリプト用のクラス定義・拡張
+#
+
+require 'csv'
+
 module InpDecoder
   class << self
     def decode(inp_string)
@@ -84,6 +95,14 @@ module InpDecoder
       end
     end
 
+    #def encode(inp)
+    #  str_inp = ''
+
+    #  str_inp += "1\n"
+    #  str_inp += "geom\n"
+    #  str_inp += "
+
+    #end
   end
 end
 
