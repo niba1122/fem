@@ -1356,6 +1356,7 @@ k=1
 	do i=1,NumOfPeriodsY
 		do j=bottomNodesOfLamina(1,i),topNodesOfLamina(1,i)
 			model%data(1)%i(k,1,1) = j
+      model%nodes(1,j) = 0d0 ! 左端を一直線にするため
 			k=k+1
 		end do
 	end do
@@ -1378,6 +1379,7 @@ K=1
 	do i=1,NumOfPeriodsY
 		do j=bottomNodesOfLamina(NumOfElementsInOneLaminaX,i),topNodesOfLamina(NumOfElementsInOneLaminaX,i)
 			model%data(2)%i(k,1,1) = j
+      model%nodes(1,j) = nodesOfLamina(1,NumOfNodesInOneLamina) ! 右端を一直線にするため
 			k=k+1
 		end do
 	end do
@@ -1403,7 +1405,6 @@ K=1
 	do i=1,NumOfElementsInOneLaminaX
 		model%data(4)%i(i,1,1) = topNodesOfLamina(i,NumOfPeriodsY)
 	end do
-
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -290,7 +290,7 @@ print *,u_
     print *,'f:',f_left,f_right
 
     call set_constrained_u(u,model,bc)
-
+!call visualize_u(model,u)
     print *,"Calculating stress and strain..."; print *
 
     call od_calc_output(output,model,u,vf_min,vf_max,vf_interval,mat_no_offset)
@@ -339,7 +339,6 @@ print *, 'damaged!!! step',step
     write(output_file_name,'(a,i0)') "step", step
      call od_output_inp(model,output,trim(od_data_path)//output_file_name,vf_min,vf_max,vf_interval,mat_no_offset,max_sig,&
                                                                                                           &focused_elements)
-
 
     print *,"Clearing data..."; print *
 
