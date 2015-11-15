@@ -88,3 +88,13 @@ p sls_damage_ratioTZ.dexp
 sls_damage_ratioTZ.dexp.each do |step,dexp|
   puts "#{step},#{dexp}"
 end
+
+# u at damaged
+puts "----- u at damaged -----"
+sls_damaged_u = SLS.new(data['damaged_u'].to_a,100)
+p sls_damaged_u.convergence_step*100
+p sls_damaged_u.dexp
+
+sls_damaged_u.dexp.each do |step,dexp|
+  puts "#{step},#{dexp}"
+end
