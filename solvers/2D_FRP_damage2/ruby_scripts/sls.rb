@@ -10,6 +10,9 @@
 require 'csv'
 require './classes.rb'
 
+# config
+
+
 class SLS
   include Math
   attr_accessor :convergence_step,:dexp,:threshold

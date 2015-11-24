@@ -13,7 +13,7 @@ require './classes.rb'
 
 # config
 
-N_MODELS = 10000
+N_MODELS = 2000
 MODEL_PATH = '../../../models/gfrp_damage'
 
 # main

@@ -1021,10 +1021,10 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   if (model%dim == 2) then
 
   allocate(nd_data(2,model%n_nds))
-  allocate(el_data(34,model%n_els))
+  allocate(el_data(40,model%n_els))
 
   allocate(nd_data_name(2))
-  allocate(el_data_name(34))
+  allocate(el_data_name(40))
 
   nd_data_name = (/"ux","uy"/)
   el_data_name(1) = "epsx"
@@ -1061,6 +1061,12 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   el_data_name(32) = 'focused element'
   el_data_name(33) = 'damage_ratioT'
   el_data_name(34) = 'damage_ratioTZ'
+  el_data_name(35) = 'abs(sigL)'
+  el_data_name(36) = 'abs(sigT)'
+  el_data_name(37) = 'abs(sigZ)'
+  el_data_name(38) = 'abs(sigTZ)'
+  el_data_name(39) = 'abs(sigZL)'
+  el_data_name(40) = 'abs(sigLT)'
 
   do i=1,model%n_nds
     nd_data(1,i) = output%u(i*2-1)
@@ -1084,7 +1090,7 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
   tmp_material_nos(:) = model%material_nos(:)
   do i=1,model%n_els
     mat_no = model%material_nos(i)
-    if ((mat_no_offset<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num-1))) then
+    if ((mat_no_offset<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num-1))) then ! 横糸の場合
       el_data(19,i) = max_sig(1,mat_no)
       el_data(20,i) = max_sig(2,mat_no)
       el_data(21,i) = max_sig(3,mat_no)
@@ -1095,6 +1101,7 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
 
       sig_rot = rot_sig(output%sig(:,i), model%data(1)%d(i,1,1))
       el_data(26:31,i) = sig_rot
+      el_data(35:40,i) = dabs(sig_rot)
 
       if (el_data(20,i) > 0d0) then
         el_data(33,i) = dabs(el_data(27,i)/el_data(20,i))
@@ -1104,7 +1111,7 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
       end if
 
       model%material_nos(i) = 2 
-    else if (((mat_no_offset+vf_num)<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num*2-1))) then
+    else if (((mat_no_offset+vf_num)<=mat_no) .and. (mat_no<=(mat_no_offset+vf_num*2-1))) then ! 縦糸の場合
       el_data(19,i) = max_sig(1,mat_no)
       el_data(20,i) = max_sig(2,mat_no)
       el_data(21,i) = max_sig(3,mat_no)
@@ -1115,6 +1122,7 @@ subroutine od_output_inp(model,output,file_name,vf_min,vf_max,vf_interval,mat_no
 
       sig_rot = rot_sig(output%sig(:,i), model%data(1)%d(i,1,1))
       el_data(26:31,i) = (/sig_rot(3),sig_rot(1),sig_rot(2),sig_rot(6),sig_rot(4),sig_rot(5)/)
+      el_data(35:40,i) = dabs((/sig_rot(3),sig_rot(1),sig_rot(2),sig_rot(6),sig_rot(4),sig_rot(5)/))
 
       if (el_data(20,i) > 0d0) then
         el_data(33,i) = dabs(el_data(27,i)/el_data(20,i))
