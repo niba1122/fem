@@ -389,26 +389,32 @@ subroutine calc_strength(max_sig,vf_min,vf_max,vf_interval,mat_no_offset)
 
   vf_num = floor(vf_max/vf_interval) - floor(vf_min/vf_interval)
 
+  ! 論文(均質化法と違法損傷力学を用いた織物複合材料のメゾ強度評価)に掲載されている強度値のVfが不明
+  ! 掲載されている均質化物性値よりVfを推測すると58.5%
+
   ! warp
   do i=mat_no_offset,(mat_no_offset+vf_num-1)
     vf = ceiling(vf_min/vf_interval+(i-mat_no_offset)) * vf_interval
-!    max_sig(1,i) = 1000.3d6+(vf-0.6d0)*100d6 ! I
-!    max_sig(2,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
-!    max_sig(6,i) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! I II
     max_sig(1,i) = 1000.3d6/0.4d0*(1d0-vf)
-    max_sig(2,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
-    max_sig(6,i) = 319.146d6*(1d0-2*dsqrt(vf/pi)) ! II III
+    ! vfの基準60%
+    !max_sig(2,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
+    !max_sig(6,i) = 319.146d6*(1d0-2*dsqrt(vf/pi)) ! II III
+    ! vfの基準58.5% (おそらく正確)
+    max_sig(2,i) = 250.4d6*(1d0-2*dsqrt(vf/pi)) ! II
+    max_sig(6,i) = 293.5d6*(1d0-2*dsqrt(vf/pi)) ! II III
   end do
 
   ! weft
   do i=(mat_no_offset+vf_num),(mat_no_offset+vf_num*2-1)
     vf = ceiling(vf_min/vf_interval+(i-mat_no_offset-vf_num)) * vf_interval
-!    max_sig(2,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! II
-!    max_sig(3,i) = 34.3d6+(vf-0.6d0)*(-18.5d6) ! III 
-!    max_sig(4,i) = 40.2d6+(vf-0.6d0)*(-21.8d6) ! II III
-    max_sig(2,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
-    max_sig(3,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
-    max_sig(4,i) = 319.146d6*(1d0-2*dsqrt(vf/pi)) ! II III
+    ! vfの基準60%
+    !max_sig(2,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
+    !max_sig(3,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
+    !max_sig(4,i) = 319.146d6*(1d0-2*dsqrt(vf/pi)) ! II III
+    ! vfの基準58.5% (おそらく正確)
+    max_sig(2,i) = 250.4d6*(1d0-2*dsqrt(vf/pi)) ! II
+    max_sig(3,i) = 250.4d6*(1d0-2*dsqrt(vf/pi)) ! II
+    max_sig(4,i) = 293.5d6*(1d0-2*dsqrt(vf/pi)) ! II III
   end do
 
 end subroutine
