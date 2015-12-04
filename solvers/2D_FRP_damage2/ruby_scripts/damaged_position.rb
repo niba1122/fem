@@ -230,6 +230,7 @@ puts "strength_LT  = #{s_lt}"
 puts "Vfmicro = #{vfmicro}"
 
 
-
-
-#puts InpDecoder.encode("test")
+io = File.open("test.inp","w")
+t_d = InpDecoder.encode(data)
+io.puts t_d
+io.close

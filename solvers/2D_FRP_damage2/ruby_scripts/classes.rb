@@ -43,14 +43,18 @@ module InpDecoder
           elems[elem[0].to_i] = []
           elems[elem[0].to_i] << elem[1].to_i
           elems[elem[0].to_i] << elem[2]
-          elems[elem[0].to_i] += elem[3..-1].map(&:to_i)
+          #elems[elem[0].to_i] += elem[3..-1].map(&:to_i)
+          elems[elem[0].to_i] << elem[3..-1].map(&:to_i)
         end
 
         # 要素ラベル
-        elems_labels = [:material_no,:elem_type,:node1,:node2,:node3,:node4]
+        #elems_labels = [:material_no,:elem_type,:node1,:node2,:node3,:node4]
+        elems_labels = [:material_no,:elem_type,:nodes]
 
         # 節点データ数、要素データ数
         n_nodes_data, n_elems_data = lines.next.split(' ').map(&:to_i)
+        data[:n_nodes_data] = n_nodes_data
+        data[:n_elems_data] = n_elems_data
         
         # 飛ばす
         lines.next
@@ -95,15 +99,67 @@ module InpDecoder
       end
     end
 
-    #def encode(inp)
-    #  str_inp = ''
+    def encode(inp_data)
+      node_data_no_offset = 4
+      elem_data_no_offset = 4
 
-    #  str_inp += "1\n"
-    #  str_inp += "geom\n"
-    #  str_inp += "
+      str_inp = InpString.new
+      str_inp.add! "1"
+      str_inp.add! "geom"
+      str_inp.add! "step1"
+      str_inp.add! inp_data[:nodes].length,inp_data[:elems].length
+      inp_data[:nodes].each do |node|
+        str_inp.add! node[:node_no],node[:x],node[:y],node[:z]
+      end
+      inp_data[:elems].each do |elem|
+        str_inp.add! elem[:elem_no],elem[:material_no],elem[:elem_type],*elem[:nodes]
+      end
+      
+      #n_nodes_data = inp_data[:n_nodes_data]
+      #n_elems_data = inp_data[:n_elems_data]
+      n_nodes_data = inp_data[:nodes].headers.length - node_data_no_offset
+      n_elems_data = inp_data[:elems].headers.length - elem_data_no_offset
+      str_inp.add! n_nodes_data, n_elems_data
+      str_inp.add! n_nodes_data, *[*0...n_nodes_data].map { 1 }
 
-    #end
+      #node_data_no_offset = inp_data[:nodes].headers.length - n_nodes_data
+      n_nodes_data.times do |i|
+        str_inp.add! inp_data[:nodes].headers[node_data_no_offset+i].to_s + ','
+      end
+
+      inp_data[:nodes].each do |node|
+        str_inp.add! node[:node_no], *[*0...n_nodes_data].map {|i| node[node_data_no_offset+i] }
+      end
+
+      str_inp.add! n_elems_data, *[*0...n_elems_data].map { 1 }
+      #elem_data_no_offset = inp_data[:elems].headers.length - n_elems_data
+      n_elems_data.times do |i|
+        str_inp.add! inp_data[:elems].headers[elem_data_no_offset+i].to_s + ','
+      end
+
+      inp_data[:elems].each do |elem|
+        str_inp.add! elem[:elem_no], *[*0...n_elems_data].map {|i| elem[elem_data_no_offset+i] }
+      end
+
+      str_inp.to_s
+    end
   end
+  class InpString
+    def initialize
+      @str = ''
+    end
+    def add!(*str_arr)
+      @str += (str_arr.map {|str| str.to_s.ljust(25)}.join + "\n")
+      self
+    end
+    def inspect
+      @str.inspect
+    end
+    def to_s
+      @str
+    end
+  end
+
 end
 
 class CSV
