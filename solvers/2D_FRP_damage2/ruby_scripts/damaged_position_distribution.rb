@@ -8,11 +8,12 @@
 #
 
 require './classes.rb'
+require './config.rb'
 
 # config
 
-MODEL_PATH = '../../../models/gfrp_damage'
-N_MODEL = 1000
+#MODEL_PATH = '../../../models/gfrp_damage'
+#N_MODELS = 1000
 
 # main
 
@@ -131,7 +132,7 @@ end
 damage_distribution = Array.new(data[:elems].length,0)
 p damage_distribution.length
 
-[*1..N_MODEL].each do |i|
+[*1..N_MODELS].each do |i|
   puts "Reading model#{i} ..."
   io = File.open("#{MODEL_PATH}/model#{i}/step1.inp","r")
 

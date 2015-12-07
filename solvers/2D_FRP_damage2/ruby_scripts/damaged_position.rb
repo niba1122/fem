@@ -8,10 +8,10 @@
 #
 
 require './classes.rb'
+require './config.rb'
 
 # config
 
-MODEL_PATH = '../../../models/gfrp_damage'
 
 # main
 

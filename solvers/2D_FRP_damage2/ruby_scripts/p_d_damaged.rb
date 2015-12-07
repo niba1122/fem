@@ -8,12 +8,13 @@
 #
 
 require './classes.rb'
+require './config.rb'
 
 # config
 
 DU = 8.89e-6 # 変位増分
-N_MODELS = 2000 # モデル数
-MODEL_PATH = '../../../models/gfrp_damage'
+#N_MODELS = 2000 # モデル数
+#MODEL_PATH = '../../../models/gfrp_damage'
 
 # main
 damage_ratios = CSV.table("#{MODEL_PATH}/damage_ratios.csv",headers: true)

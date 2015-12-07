@@ -9,6 +9,7 @@
 
 require 'csv'
 require './classes.rb'
+require './config.rb'
 
 # config
 
@@ -66,7 +67,7 @@ class SLS
 end
   
 #main
-DATA_PATH = '../../../models/gfrp_damage/damage_ratios.csv'
+DATA_PATH = MODEL_PATH + '/damage_ratios.csv'
 
 io = File.open(DATA_PATH)
 
