@@ -16,6 +16,7 @@ require './config.rb'
 
 #N_MODELS = 2000
 #MODEL_PATH = '../../../models/gfrp_damage'
+#DU = 8.89*10**(-6)*2
 
 # main
 
@@ -78,8 +79,7 @@ N_MODELS.times do |i|
     damage_ratio_TZ = max_val
 
     # damaged_u
-    du = 8.89*10**(-6)
-    damaged_u = du/[damage_ratio_T,damage_ratio_TZ].max
+    damaged_u = DU/[damage_ratio_T,damage_ratio_TZ].max
 
     models_data.push CSV::Row.new(models_data_headers,[i+1]<<damage_ratio_T<<damage_ratio_TZ<<damaged_u)
 
