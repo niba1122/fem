@@ -33,10 +33,14 @@ s_t = 0.0
 vfmicro = 0.0
 damage_ratios = data[:elems].map do |row|
   if row[:material_no] == 3
+#strength = (row[:Vf]**2)*(-37.5e6)+row[:Vf]*(-31.7e6)+65.7e6
+#if (row[:sigII]/strength).abs > max_val
     if (row[:sigII]/row[:max_sig_T]).abs > max_val
       sig_t = row[:sigII]
       s_t = row[:max_sig_T]
+#s_t = strength
       max_val = (row[:sigII]/row[:max_sig_T]).abs
+#max_val = (row[:sigII]/strength).abs
       max_i = row[:elem_no]
       vfmicro = row[:Vf]
     end

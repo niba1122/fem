@@ -57,8 +57,12 @@ N_MODELS.times do |i|
     max_i = 0
     damage_ratios = data[:elems].map do |row|
       if row[:material_no] == 3
-        if (row[:sigII]/row[:max_sig_T]).abs > max_val
-          max_val = (row[:sigII]/row[:max_sig_T]).abs
+#        if (row[:sigII]/row[:max_sig_T]).abs > max_val
+strength = (row[:Vf]**2)*(-37.5e6)+row[:Vf]*(-31.7e6)+65.7e6
+#p "#{strength}, #{row[:max_sig_T]}"
+        if (row[:sigII]/strength).abs > max_val
+#          max_val = (row[:sigII]/row[:max_sig_T]).abs
+          max_val = (row[:sigII]/strength).abs
           max_i = row[:elem_no]
         end
       end
