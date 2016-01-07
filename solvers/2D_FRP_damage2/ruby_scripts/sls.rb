@@ -44,6 +44,8 @@ class SLS
 
       if @dexp[i] < @threshold
         count += 1
+      else
+        count = 0
       end
       puts "#{@dexp[i]}, #{@threshold}, #{count}"
       if count == N_TIMES_CONVERGENCE

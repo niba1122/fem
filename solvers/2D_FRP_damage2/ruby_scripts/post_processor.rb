@@ -44,7 +44,7 @@ end
 
 # inp2csv
 models_data = CSV::Table.new([])
-models_data_headers = [:model_no,:damage_ratioT,:damage_rationTZ,:damaged_u]
+models_data_headers = [:model_no,:damage_ratioT,:damage_rationTZ,:damaged_u,:vf_at_damaged_area]
 
 N_MODELS.times do |i|
   puts "inp file of model#{i+1} reading..."
@@ -55,14 +55,15 @@ N_MODELS.times do |i|
     # sigT
     max_val = 0.0
     max_i = 0
+    vf_T = 0
     damage_ratios = data[:elems].map do |row|
       if row[:material_no] == 3
-#        if (row[:sigII]/row[:max_sig_T]).abs > max_val
-strength = (row[:Vf]**2)*(-37.5e6)+row[:Vf]*(-31.7e6)+65.7e6
-#p "#{strength}, #{row[:max_sig_T]}"
+#strength = (row[:Vf]**2)*(-37.5e6)+row[:Vf]*(-31.7e6)+65.7e6
+strength = row[:max_sig_T]
         if (row[:sigII]/strength).abs > max_val
 #          max_val = (row[:sigII]/row[:max_sig_T]).abs
           max_val = (row[:sigII]/strength).abs
+          vf_T = row[:Vf]
           max_i = row[:elem_no]
         end
       end
@@ -85,7 +86,7 @@ strength = (row[:Vf]**2)*(-37.5e6)+row[:Vf]*(-31.7e6)+65.7e6
     # damaged_u
     damaged_u = DU/[damage_ratio_T,damage_ratio_TZ].max
 
-    models_data.push CSV::Row.new(models_data_headers,[i+1]<<damage_ratio_T<<damage_ratio_TZ<<damaged_u)
+    models_data.push CSV::Row.new(models_data_headers,[i+1]<<damage_ratio_T<<damage_ratio_TZ<<damaged_u<<vf_T)
 
     io.close
 #  p GC.stat

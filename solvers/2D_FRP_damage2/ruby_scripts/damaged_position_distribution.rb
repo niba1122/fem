@@ -10,6 +10,8 @@
 require './classes.rb'
 require './config.rb'
 
+
+
 # config
 
 #MODEL_PATH = '../../../models/gfrp_damage'
@@ -142,9 +144,16 @@ p damage_distribution.length
   io.close
 end
 
+most_damaged_area = damage_distribution.index(damage_distribution.max) + 1
+p most_damaged_area
+
+#p damage_distribution.sort { |a,b| b <=> a } [0...10].map { |dd| damage_distribution.index(dd)+1 }
+
+p damage_distribution.each_with_index.sort {|a,b| b <=> a }[0...10].map {|dd,i| i+1 }
+
 data[:elems][:damage_distribution] = damage_distribution
 
-puts "Outputting inp file..."
-io = File.open("#{MODEL_PATH}/damage_distribution.inp","w")
-  io.puts InpDecoder.encode(data)
-io.close
+#puts "Outputting inp file..."
+#io = File.open("#{MODEL_PATH}/damage_distribution.inp","w")
+#  io.puts InpDecoder.encode(data)
+#io.close

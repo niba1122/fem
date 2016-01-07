@@ -239,7 +239,6 @@ class NormRand
         return z + @exp 
       end
     end
-    rn
   end
 end
 
@@ -261,3 +260,100 @@ class NormRandVfmicro
     Array(0...@n_vfmicro).map { |i| @exp + partitions[i+1] - partitions[i] }
   end
 end
+
+module InitiallyDamagedRegion
+  class << self
+    def sigT_weft(data)
+      # sigT(weft)
+      max_val = 0.0
+      max_i = 0
+      sig_t = 0.0
+      min_sig_t = 1e30
+      max_sig_t = -1e30
+      max_sig_t_no = 0
+      min_sig_t_no = 0
+      s_t = 0.0
+      vfmicro = 0.0
+      damage_ratios = data[:elems].map do |row|
+        if row[:material_no] == 3
+          if (row[:sigII]/row[:max_sig_T]).abs > max_val
+            sig_t = row[:sigII]
+            s_t = row[:max_sig_T]
+            max_val = (row[:sigII]/row[:max_sig_T]).abs
+            max_i = row[:elem_no]
+            vfmicro = row[:Vf]
+          end
+
+          if row[:sigII]<min_sig_t
+            min_sig_t = row[:sigII]
+            min_sig_t_no = row[:elem_no]
+          end
+          if row[:sigII]>max_sig_t
+            max_sig_t = row[:sigII]
+            max_sig_t_no = row[:elem_no]
+          end
+        end
+      end
+      damage_ratio_T = max_val
+
+      #puts "## stress T (weft) ##" 
+      #puts "stress at damaged element = #{sig_t} at #{max_i}"
+      #puts "damage ratio = #{max_val}"
+      #puts "stress_T max = #{max_sig_t} at #{max_sig_t_no}"
+      #puts "stress_T min = #{min_sig_t} at #{min_sig_t_no}"
+      #puts "strength_T  = #{s_t}"
+      #puts "Vfmicro = #{vfmicro}"
+
+      #puts ""
+
+      max_i
+
+    end
+
+    def sigTZ_weft(data)
+      # sigTZ(weft)
+      max_val = 0.0
+      max_i = 0
+      sig_tz = 0.0
+      min_sig_tz = 1e30
+      max_sig_tz = -1e30
+      min_sig_tz_no = 0
+      max_sig_tz_no = 0
+      s_tz = 0.0
+      vfmicro = 0.0
+      damage_ratios = data[:elems].map do |row|
+        if row[:material_no] == 3
+          if (row[:sigII_III]/row[:max_sig_TZ]).abs > max_val
+            sig_tz = row[:sigII_III]
+            s_tz = row[:max_sig_TZ]
+            max_val = (row[:sigII_III]/row[:max_sig_TZ]).abs
+            max_i = row[:elem_no]
+            vfmicro = row[:Vf]
+          end
+
+          if row[:sigII_III]<min_sig_tz
+            min_sig_tz = row[:sigII_III]
+            min_sig_tz_no = row[:elem_no]
+          end
+          if row[:sigII_III]>max_sig_tz
+            max_sig_tz = row[:sigII_III]
+            max_sig_tz_no = row[:elem_no]
+          end
+        end
+      end
+      damage_ratio_TZ = max_val
+      #puts "## stress TZ (weft) ##"
+      #puts "stress at damaged element = #{sig_tz} at #{max_i}"
+      #puts "damage ratio = #{max_val}"
+      #puts "stress_TZ max = #{max_sig_tz} at #{max_sig_tz_no}"
+      #puts "stress_TZ min = #{min_sig_tz} at #{min_sig_tz_no}"
+      #puts "strength_T  = #{s_tz}"
+      #puts "Vfmicro = #{vfmicro}"
+
+      #puts ""
+      max_i
+
+    end
+  end
+end
+

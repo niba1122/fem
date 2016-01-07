@@ -233,8 +233,14 @@ puts "stress_LT min = #{min_sig_lt} at #{min_sig_lt_no}"
 puts "strength_LT  = #{s_lt}"
 puts "Vfmicro = #{vfmicro}"
 
+p data[:elems].headers
 
-io = File.open("test.inp","w")
-t_d = InpDecoder.encode(data)
-io.puts t_d
-io.close
+puts 'stress II: ' + data[:elems].no(4780)[:sigII].to_s
+puts 'strength II: ' + data[:elems].no(4780)[:max_sig_T].to_s
+puts 'Vf' + data[:elems].no(4780)[:Vf].to_s
+
+
+#io = File.open("test.inp","w")
+#t_d = InpDecoder.encode(data)
+#io.puts t_d
+#io.close

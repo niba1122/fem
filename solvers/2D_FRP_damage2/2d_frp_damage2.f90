@@ -397,24 +397,24 @@ subroutine calc_strength(max_sig,vf_min,vf_max,vf_interval,mat_no_offset)
     vf = ceiling(vf_min/vf_interval+(i-mat_no_offset)) * vf_interval
     max_sig(1,i) = 1000.3d6/0.4d0*(1d0-vf)
     ! vfの基準60%
-    !max_sig(2,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
-    !max_sig(6,i) = 319.146d6*(1d0-2*dsqrt(vf/pi)) ! II III
+    max_sig(2,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
+    max_sig(6,i) = 319.146d6*(1d0-2*dsqrt(vf/pi)) ! II III
     ! vfの基準58.5% (おそらく正確)
-    max_sig(2,i) = 250.4d6*(1d0-2*dsqrt(vf/pi)) ! II
-    max_sig(6,i) = 293.5d6*(1d0-2*dsqrt(vf/pi)) ! II III
+    !max_sig(2,i) = 250.4d6*(1d0-2*dsqrt(vf/pi)) ! II
+    !max_sig(6,i) = 293.5d6*(1d0-2*dsqrt(vf/pi)) ! II III
   end do
 
   ! weft
   do i=(mat_no_offset+vf_num),(mat_no_offset+vf_num*2-1)
     vf = ceiling(vf_min/vf_interval+(i-mat_no_offset-vf_num)) * vf_interval
     ! vfの基準60%
-    !max_sig(2,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
-    !max_sig(3,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
-    !max_sig(4,i) = 319.146d6*(1d0-2*dsqrt(vf/pi)) ! II III
+    max_sig(2,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
+    max_sig(3,i) = 272.306d6*(1d0-2*dsqrt(vf/pi)) ! II
+    max_sig(4,i) = 319.146d6*(1d0-2*dsqrt(vf/pi)) ! II III
     ! vfの基準58.5% (おそらく正確)
-    max_sig(2,i) = 250.4d6*(1d0-2*dsqrt(vf/pi)) ! II
-    max_sig(3,i) = 250.4d6*(1d0-2*dsqrt(vf/pi)) ! II
-    max_sig(4,i) = 293.5d6*(1d0-2*dsqrt(vf/pi)) ! II III
+    !max_sig(2,i) = 250.4d6*(1d0-2*dsqrt(vf/pi)) ! II
+    !max_sig(3,i) = 250.4d6*(1d0-2*dsqrt(vf/pi)) ! II
+    !max_sig(4,i) = 293.5d6*(1d0-2*dsqrt(vf/pi)) ! II III
   end do
 
 end subroutine
