@@ -16,7 +16,7 @@ require './config.rb'
 
 class SLS
   include Math
-  attr_accessor :convergence_step,:dexp,:threshold
+  attr_accessor :convergence_step,:dexp,:threshold,:exp
   
   N_TIMES_CONVERGENCE = 3
 
@@ -50,7 +50,7 @@ class SLS
       puts "#{@dexp[i]}, #{@threshold}, #{count}"
       if count == N_TIMES_CONVERGENCE
         @convergence_step = i
-        break
+#        break
       end
     end
 
@@ -89,11 +89,13 @@ end
 puts "----- damage_ratioTZ -----"
 sls_damage_ratioTZ = SLS.new(data['damage_rationTZ'].to_a,100)
 p sls_damage_ratioTZ.convergence_step*100
-p sls_damage_ratioTZ.dexp
+#p sls_damage_ratioTZ.dexp
+#p sls_damage_ratioTZ.exp
 
 sls_damage_ratioTZ.dexp.each do |step,dexp|
   puts "#{step},#{dexp}"
 end
+
 
 # u at damaged
 puts "----- u at damaged -----"
@@ -102,5 +104,8 @@ p sls_damaged_u.convergence_step*100
 p sls_damaged_u.dexp
 
 sls_damaged_u.dexp.each do |step,dexp|
+  puts "#{step},#{dexp}"
+end
+sls_damaged_u.exp.each do |step,dexp|
   puts "#{step},#{dexp}"
 end
